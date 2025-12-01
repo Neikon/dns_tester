@@ -75,6 +75,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         dialog.set_title("Add DNS Entry")
         dialog.set_content_width(360)
         dialog.set_content_height(220)
+        dialog.set_can_close(True)
 
         content_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
@@ -98,7 +99,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         button_box.append(cancel_btn)
         button_box.append(add_btn)
         content_box.append(button_box)
-        dialog.set_child(content_box)
+        dialog.set_child(self._wrap_dialog_content(content_box, "Add DNS Entry"))
 
         def close_dialog(_button: Gtk.Button) -> None:
             """Close the dialog without adding a row."""
@@ -188,13 +189,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         results_box.add_css_class("boxed-list-separate")
         content_box.append(results_box)
 
-        dialog.set_child(content_box)
-
-        def close_attempt(_dialog: Adw.Dialog, _data=None) -> None:
-            """Allow the dialog's built-in close control to dismiss it."""
-            dialog.force_close()
-
-        dialog.connect("close-attempt", close_attempt)
+        dialog.set_child(self._wrap_dialog_content(content_box, title))
         return dialog, results_box
 
     def _populate_results_list(self, results_box: Gtk.ListBox, results: list[tuple[str, str]]) -> None:
@@ -202,3 +197,15 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         for name, latency in results:
             row = Adw.ActionRow(title=name, subtitle=latency, activatable=False, selectable=False)
             results_box.append(row)
+
+    def _wrap_dialog_content(self, body: Gtk.Widget, title: str) -> Adw.ToolbarView:
+        """Wrap dialog content in a toolbar view with a header bar for a clean title/close layout."""
+        header_bar = Adw.HeaderBar()
+        header_bar.set_title_widget(Gtk.Label(label=title))
+        header_bar.set_show_start_title_buttons(False)
+        header_bar.set_show_end_title_buttons(True)
+
+        toolbar_view = Adw.ToolbarView()
+        toolbar_view.add_top_bar(header_bar)
+        toolbar_view.set_content(body)
+        return toolbar_view
