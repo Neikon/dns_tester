@@ -173,6 +173,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         dialog.set_title(title)
         dialog.set_content_width(420)
         dialog.set_content_height(280)
+        dialog.set_can_close(True)
 
         content_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
@@ -187,20 +188,13 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         results_box.add_css_class("boxed-list-separate")
         content_box.append(results_box)
 
-        button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6, hexpand=True)
-        button_box.set_homogeneous(True)
-        close_btn = Gtk.Button(label="_Close", use_underline=True, hexpand=True)
-        close_btn.add_css_class("suggested-action")
-        button_box.append(close_btn)
-        content_box.append(button_box)
         dialog.set_child(content_box)
 
-        def close_dialog(_btn: Gtk.Button) -> None:
-            """Close the results dialog."""
-            dialog.close()
+        def close_attempt(_dialog: Adw.Dialog, _data=None) -> None:
+            """Allow the dialog's built-in close control to dismiss it."""
+            dialog.force_close()
 
-        close_btn.connect("clicked", close_dialog)
-        dialog.set_default_widget(close_btn)
+        dialog.connect("close-attempt", close_attempt)
         return dialog, results_box
 
     def _populate_results_list(self, results_box: Gtk.ListBox, results: list[tuple[str, str]]) -> None:
