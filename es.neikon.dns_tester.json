@@ -23,6 +23,7 @@
         "*.a"
     ],
     "modules" : [
+        "python-deps.json",
         {
             "name" : "dns_tester",
             "builddir" : true,
