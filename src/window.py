@@ -17,9 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import re
-import subprocess
-
+import dns.resolver
 from gi.repository import Adw
 from gi.repository import Gtk
 
@@ -38,6 +36,9 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         super().__init__(**kwargs)
         # Counter keeps track of how many rows exist for incremental labels.
         self.entry_count = 0
+        # Default domain and record type used for DNS queries.
+        self.test_domain = "example.com"
+        self.test_record_type = "A"
 
         # Build the list box dynamically so the UI file stays minimal.
         self.list_box = Gtk.ListBox(
@@ -127,7 +128,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback()
     def on_check_button_clicked(self, _button: Gtk.Button) -> None:
-        """Ping every DNS entry and show latencies inside an Adwaita dialog."""
+        """Resolve the test domain with each DNS entry and show results in a dialog."""
         results: list[tuple[str, str]] = []
         dialog, results_box = self._create_results_dialog(title="Testing")
         dialog.present(self)
@@ -139,34 +140,32 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             if isinstance(entry_widget, Adw.ActionRow):
                 name = entry_widget.get_title() or "Unknown"
                 ip_address = entry_widget.get_subtitle() or ""
-                latency = self._ping_ip(ip_address) if ip_address else "missing IP"
-                results.append((name, latency))
+                result = self._resolve_dns(ip_address) if ip_address else "missing IP"
+                results.append((name, result))
             row = row.get_next_sibling()
 
         # Populate the dialog list with results.
         self._populate_results_list(results_box, results)
         dialog.set_title("Results")
 
-    def _ping_ip(self, ip_address: str) -> str:
-        """Run a single ping and return the latency text or an error note."""
-        cmd = ["ping", "-c", "1", "-W", "1", ip_address]
+    def _resolve_dns(self, ip_address: str) -> str:
+        """Use dnspython to resolve the test domain via the provided DNS server."""
+        resolver = dns.resolver.Resolver(configure=False)
+        resolver.nameservers = [ip_address]
+        resolver.lifetime = 2.0
+
         try:
-            completed = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+            answer = resolver.resolve(self.test_domain, self.test_record_type)
+            records = ", ".join(str(rdata) for rdata in answer)
+            return f"{self.test_record_type}: {records}"
+        except dns.resolver.NoAnswer:
+            return "no answer"
+        except dns.resolver.NXDOMAIN:
+            return "domain not found"
+        except dns.resolver.Timeout:
+            return "timeout"
         except Exception as exc:  # noqa: BLE001
             return f"error: {exc}"
-
-        if completed.returncode != 0:
-            return "timeout/unreachable"
-
-        match = re.search(r"time=([0-9.]+)\\s*ms", completed.stdout)
-        if match:
-            return f"{match.group(1)} ms"
-        return "latency unavailable"
 
     def _create_results_dialog(self, title: str) -> tuple[Adw.Dialog, Gtk.ListBox]:
         """Create an Adwaita dialog prepared to display ping results."""
