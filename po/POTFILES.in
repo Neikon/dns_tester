@@ -1,0 +1,8 @@
+# List of source files containing translatable strings.
+# Please keep this file sorted alphabetically.
+data/es.neikon.dns_tester.desktop.in
+data/es.neikon.dns_tester.metainfo.xml.in
+data/es.neikon.dns_tester.gschema.xml
+src/main.py
+src/window.py
+src/window.ui

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=dns_tester
+Exec=dns_tester
+Icon=es.neikon.dns_tester
+Terminal=false
+Type=Application
+Categories=Utility;
+Keywords=GTK;
+StartupNotify=true
+DBusActivatable=true
