@@ -18,6 +18,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import dns.resolver
+from .aux import TOP_ES_WEBS
 from .default_dns import DEFAULT_DNS
 from gi.repository import Adw
 from gi.repository import Gtk
@@ -144,38 +145,57 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         dialog.present(self)
 
         row = self.list_box.get_first_child()
+        print("[DNS check] Starting tests...")
         while row is not None:
             # ListBox wraps children, so unwrap if needed.
-            entry_widget = row.get_child() if isinstance(row, Gtk.ListBoxRow) else row
-            if isinstance(entry_widget, Adw.ActionRow):
-                name = entry_widget.get_title() or "Unknown"
-                ip_address = entry_widget.get_subtitle() or ""
+            if isinstance(row, Adw.ActionRow):
+                print(f"[DNS check] Processing row: {row.get_title()}")
+                name = row.get_title() or "Unknown"
+                ip_address = row.get_subtitle() or ""
                 result = self._resolve_dns(ip_address) if ip_address else "missing IP"
+                print(f"[DNS check] {name} @ {ip_address} -> {result}")
                 results.append((name, result))
             row = row.get_next_sibling()
+
+        
 
         # Populate the dialog list with results.
         self._populate_results_list(results_box, results)
         dialog.set_title("Results")
 
     def _resolve_dns(self, ip_address: str) -> str:
-        """Use dnspython to resolve the test domain via the provided DNS server."""
+        """Resolve many domains via the given DNS server and report latency stats."""
         resolver = dns.resolver.Resolver(configure=False)
         resolver.nameservers = [ip_address]
         resolver.lifetime = 2.0
 
-        try:
-            answer = resolver.resolve(self.test_domain, self.test_record_type)
-            records = ", ".join(str(rdata) for rdata in answer)
-            return f"{self.test_record_type}: {records}"
-        except dns.resolver.NoAnswer:
-            return "no answer"
-        except dns.resolver.NXDOMAIN:
-            return "domain not found"
-        except dns.resolver.Timeout:
-            return "timeout"
-        except Exception as exc:  # noqa: BLE001
-            return f"error: {exc}"
+        latencies: list[float] = []
+        errors = 0
+
+        for domain in TOP_ES_WEBS:
+            try:
+                answer = resolver.resolve(
+                    domain,
+                    self.test_record_type,
+                    lifetime=resolver.lifetime,
+                )
+                latency_ms = (answer.response.time or 0) * 1000.0
+                latencies.append(latency_ms)
+            except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.resolver.Timeout):
+                errors += 1
+            except Exception:
+                errors += 1
+
+        if not latencies:
+            return "no successful responses"
+
+        best = min(latencies)
+        worst = max(latencies)
+        avg = sum(latencies) / len(latencies)
+        summary = f"avg {avg:.1f} ms | best {best:.1f} ms | worst {worst:.1f} ms"
+        if errors:
+            summary += f" | errors {errors}"
+        return summary
 
     def _create_results_dialog(self, title: str) -> tuple[Adw.Dialog, Gtk.ListBox]:
         """Create an Adwaita dialog prepared to display ping results."""
@@ -192,11 +212,16 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             margin_bottom=12,
             margin_start=12,
             margin_end=12,
+            hexpand=True,
+            vexpand=True,
         )
 
-        results_box = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        results_box = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE, hexpand=True, vexpand=True)
         results_box.add_css_class("boxed-list-separate")
-        content_box.append(results_box)
+
+        scroller = Gtk.ScrolledWindow(hexpand=True, vexpand=True, min_content_height=200)
+        scroller.set_child(results_box)
+        content_box.append(scroller)
 
         dialog.set_child(self._wrap_dialog_content(content_box, title))
         return dialog, results_box
