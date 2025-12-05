@@ -157,8 +157,6 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                 results.append((name, result))
             row = row.get_next_sibling()
 
-        
-
         # Populate the dialog list with results.
         self._populate_results_list(results_box, results)
         dialog.set_title("Results")
@@ -228,9 +226,24 @@ class DnsTesterWindow(Adw.ApplicationWindow):
 
     def _populate_results_list(self, results_box: Gtk.ListBox, results: list[tuple[str, str]]) -> None:
         """Fill the given list box with latency results."""
-        for name, latency in results:
+        for name, latency in self._sorted_results_by_latency(results):
             row = Adw.ActionRow(title=name, subtitle=latency, activatable=False, selectable=False)
             results_box.append(row)
+
+    def _sorted_results_by_latency(self, results: list[tuple[str, str]]) -> list[tuple[str, str]]:
+        """Sort results by average latency when present; fallback to original order."""
+        def extract_avg(latency_str: str) -> float:
+            if "avg" in latency_str:
+                for part in latency_str.split("|"):
+                    part = part.strip()
+                    if part.startswith("avg"):
+                        try:
+                            return float(part.split()[1])
+                        except (ValueError, IndexError):
+                            return float("inf")
+            return float("inf")
+
+        return sorted(results, key=lambda item: extract_avg(item[1]))
 
     def _wrap_dialog_content(self, body: Gtk.Widget, title: str) -> Adw.ToolbarView:
         """Wrap dialog content in a toolbar view with a header bar for a clean title/close layout."""
