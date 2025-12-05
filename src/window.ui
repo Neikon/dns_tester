@@ -4,8 +4,8 @@
   <requires lib="Adw" version="1.0"/>
   <template class="DnsTesterWindow" parent="AdwApplicationWindow">
     <property name="title" translatable="yes">DNS_Tester</property>
-    <property name="default-width">800</property>
-    <property name="default-height">600</property>
+    <property name="default-width">500</property>
+    <property name="default-height">720</property>
     <property name="content">
       <object class="AdwToolbarView">
         <child type="top">
@@ -40,12 +40,22 @@
             <property name="margin-top">12</property>
             <property name="margin-bottom">12</property>
             <child>
-              <!-- Empty container for dynamic content built in Python. -->
-              <object class="GtkBox" id="content_box">
-                <property name="orientation">vertical</property>
-                <property name="spacing">0</property>
+              <!-- Scrollable container so the dynamic list does not overflow the view. -->
+              <object class="GtkScrolledWindow">
                 <property name="hexpand">True</property>
                 <property name="vexpand">True</property>
+                <property name="min-content-height">200</property>
+                <property name="propagate-natural-height">True</property>
+                <property name="propagate-natural-width">True</property>
+                <child>
+                  <!-- Empty container for dynamic content built in Python. -->
+                  <object class="GtkBox" id="content_box">
+                    <property name="orientation">vertical</property>
+                    <property name="spacing">0</property>
+                    <property name="hexpand">True</property>
+                    <property name="vexpand">True</property>
+                  </object>
+                </child>
               </object>
             </child>
             <child>
@@ -53,7 +63,11 @@
                 <property name="label" translatable="yes">Check DNS List</property>
                 <property name="hexpand">True</property>
                 <property name="halign">fill</property>
-                <property name="margin-top">12</property>
+                <property name="height-request">48</property>
+                <property name="margin-top">0</property>
+                <property name="margin-bottom">0</property>
+                <property name="margin-start">12</property>
+                <property name="margin-end">12</property>
                 <style>
                   <class name="suggested-action"/>
                 </style>

@@ -18,6 +18,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import dns.resolver
+from .default_dns import DEFAULT_DNS
 from gi.repository import Adw
 from gi.repository import Gtk
 
@@ -52,9 +53,9 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             margin_end=12,
         )
 
-        # Add sample rows for DNS entries; will be replaced with real data later.
-        self._add_row("Primary DNS", "8.8.8.8")
-        self._add_row("Secondary DNS", "1.1.1.1")
+        # Add sample rows for DNS entries from the bundled defaults.
+        for name, ip in DEFAULT_DNS:
+            self._add_row(name, ip)
 
         # Insert the list box into the main container.
         self.content_box.append(self.list_box)
@@ -67,6 +68,15 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             activatable=False,
             selectable=False,
         )
+        remove_button = Gtk.Button.new_from_icon_name("user-trash-symbolic")
+        remove_button.add_css_class("destructive-action")
+        remove_button.add_css_class("flat")
+        remove_button.set_tooltip_text("Remove entry")
+        remove_button.connect(
+            "clicked",
+            lambda _btn: self.list_box.remove(action_row),
+        )
+        action_row.add_suffix(remove_button)
         self.list_box.append(action_row)
         self.entry_count += 1
 
