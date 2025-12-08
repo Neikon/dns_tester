@@ -130,7 +130,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         button_box.append(cancel_btn)
         button_box.append(add_btn)
         content_box.append(button_box)
-        dialog.set_child(self._wrap_dialog_content(content_box, "Add DNS Entry"))
+        dialog.set_child(content_box)
 
         def close_dialog(_button: Gtk.Button) -> None:
             """Close the dialog without adding a row."""
