@@ -30,3 +30,8 @@ The project ships a Flatpak manifest (`es.neikon.dns_tester.json`) and a helper 
 flatpak-builder --user --install --force-clean build-dir es.neikon.dns_tester.json
 flatpak run es.neikon.dns_tester
 ```
+
+## Roadmap
+- Sort servers automatically by their measured latency so the fastest resolvers appear first.
+- (Planned) Persist custom DNS entries across sessions.
+- (Planned) Export/import resolver lists.
