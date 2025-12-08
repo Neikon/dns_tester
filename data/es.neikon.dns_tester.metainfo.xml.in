@@ -58,8 +58,8 @@
   </screenshots>
 
   <releases>
-    <release version="1.0.1" date="2024-01-18">
-      <url type="details">https://example.org/changelog.html#version_1.0.1</url>
+    <release version="25.12.08" date="2025-12-08">
+      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/25.12.08</url>
       <description translate="no">
         <p>Release description</p>
         <ul>
