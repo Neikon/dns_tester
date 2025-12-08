@@ -40,7 +40,7 @@ class DnsTesterApplication(Adw.Application):
                          resource_base_path='/es/neikon/dns_tester')
         self.create_action('quit', lambda *_: self.quit(), ['<control>q'])
         self.create_action('about', self.on_about_action)
-        self.create_action('preferences', self.on_preferences_action)
+        # self.create_action('preferences', self.on_preferences_action)
 
     def do_activate(self):
         """Called when the application is activated.
@@ -61,6 +61,8 @@ class DnsTesterApplication(Adw.Application):
                                 version='0.1.0',
                                 developers=['neikon'],
                                 copyright='© 2025 neikon')
+        about.set_comments(_('DNS Tester checks each server against the 50 most visited websites in Spain to estimate latency and reachability.'))
+        about.set_website('https://github.com/Neikon/dns_tester')
         # Translators: Replace "translator-credits" with your name/username, and optionally an email or URL.
         about.set_translator_credits(_('translator-credits'))
         about.present(self.props.active_window)
