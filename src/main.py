@@ -63,6 +63,7 @@ class DnsTesterApplication(Adw.Application):
                                 copyright='© 2025 neikon')
         about.set_comments(_('DNS Tester checks each server against the 50 most visited websites in Spain to estimate latency and reachability.'))
         about.set_website('https://github.com/Neikon/dns_tester')
+        about.set_issue_url('https://github.com/Neikon/dns_tester/issues')
         # Translators: Replace "translator-credits" with your name/username, and optionally an email or URL.
         about.set_translator_credits(_('translator-credits'))
         about.present(self.props.active_window)
