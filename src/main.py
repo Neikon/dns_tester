@@ -55,7 +55,7 @@ class DnsTesterApplication(Adw.Application):
 
     def on_about_action(self, *args):
         """Callback for the app.about action."""
-        about = Adw.AboutDialog(application_name='dns_tester',
+        about = Adw.AboutDialog(application_name='DNS Tester',
                                 application_icon='es.neikon.dns_tester',
                                 developer_name='neikon',
                                 version='0.1.0',

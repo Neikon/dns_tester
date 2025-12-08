@@ -45,7 +45,6 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         # Counter keeps track of how many rows exist for incremental labels.
         self.entry_count = 0
         # Default domain and record type used for DNS queries.
-        self.test_domain = "example.com"
         self.test_record_type = "A"
 
         # Build the list box dynamically so the UI file stays minimal.
