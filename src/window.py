@@ -17,7 +17,10 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import threading
+
 import dns.resolver
+from gi.repository import GLib
 from .aux import TOP_ES_WEBS
 from .default_dns import DEFAULT_DNS
 from gi.repository import Adw
@@ -62,8 +65,8 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         self.content_box.append(self.list_box)
 
     def _add_row(self, name: str, ip_address: str) -> None:
-        """Create and append an action row with the given name and IP."""
-        action_row = Adw.ActionRow(
+        """Create and append an expander row with the given name and IP."""
+        expander_row = Adw.ExpanderRow(
             title=name,
             subtitle=ip_address,
             activatable=False,
@@ -75,10 +78,26 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         remove_button.set_tooltip_text("Remove entry")
         remove_button.connect(
             "clicked",
-            lambda _btn: self.list_box.remove(action_row),
+            lambda _btn: self.list_box.remove(expander_row),
         )
-        action_row.add_suffix(remove_button)
-        self.list_box.append(action_row)
+        # Nested action row to display results or extra info.
+        result_row = Adw.ActionRow(
+            title="Results pending",
+            subtitle="",
+            activatable=False,
+            selectable=False,
+        )
+        expander_row.result_row = result_row
+        test_button = Gtk.Button.new_from_icon_name("media-playback-start-symbolic")
+        test_button.add_css_class("flat")
+        test_button.set_tooltip_text("Test this DNS")
+
+        test_button.connect("clicked", self._run_test_async, expander_row, result_row)
+        result_row.add_suffix(test_button)
+        expander_row.add_row(result_row)
+
+        expander_row.add_suffix(remove_button)
+        self.list_box.append(expander_row)
         self.entry_count += 1
 
     def _show_add_dialog(self) -> None:
@@ -139,27 +158,15 @@ class DnsTesterWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback()
     def on_check_button_clicked(self, _button: Gtk.Button) -> None:
-        """Resolve the test domain with each DNS entry and show results in a dialog."""
-        results: list[tuple[str, str]] = []
-        dialog, results_box = self._create_results_dialog(title="Testing")
-        dialog.present(self)
-
+        """Run individual checks sequentially and update each row inline."""
         row = self.list_box.get_first_child()
-        print("[DNS check] Starting tests...")
+        print("[DNS check] Running all rows...")
         while row is not None:
-            # ListBox wraps children, so unwrap if needed.
-            if isinstance(row, Adw.ActionRow):
-                print(f"[DNS check] Processing row: {row.get_title()}")
-                name = row.get_title() or "Unknown"
-                ip_address = row.get_subtitle() or ""
-                result = self._resolve_dns(ip_address) if ip_address else "missing IP"
-                print(f"[DNS check] {name} @ {ip_address} -> {result}")
-                results.append((name, result))
+            if isinstance(row, Adw.ExpanderRow):
+                result_row = getattr(row, "result_row", None)
+                if isinstance(result_row, Adw.ActionRow):
+                    self._run_test_async(None, row, result_row)
             row = row.get_next_sibling()
-
-        # Populate the dialog list with results.
-        self._populate_results_list(results_box, results)
-        dialog.set_title("Results")
 
     def _resolve_dns(self, ip_address: str) -> str:
         """Resolve many domains via the given DNS server and report latency stats."""
@@ -195,64 +202,31 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             summary += f" | errors {errors}"
         return summary
 
-    def _create_results_dialog(self, title: str) -> tuple[Adw.Dialog, Gtk.ListBox]:
-        """Create an Adwaita dialog prepared to display ping results."""
-        dialog = Adw.Dialog.new()
-        dialog.set_title(title)
-        dialog.set_content_width(420)
-        dialog.set_content_height(280)
-        dialog.set_can_close(True)
+    def _run_test_async(self, _btn: Gtk.Button | None, expander_row: Adw.ExpanderRow, result_row: Adw.ActionRow) -> None:
+        """Resolve only this DNS in a worker thread and update its nested result row."""
+        ip = expander_row.get_subtitle() or ""
+        if not ip:
+            result_row.set_title("No IP set")
+            result_row.set_subtitle("")
+            return
 
-        content_box = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL,
-            spacing=12,
-            margin_top=12,
-            margin_bottom=12,
-            margin_start=12,
-            margin_end=12,
-            hexpand=True,
-            vexpand=True,
-        )
+        result_row.set_title("Testing...")
+        result_row.set_subtitle("Working...")
+        expander_row.set_expanded(True)
+        self.list_box.queue_draw()
 
-        results_box = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE, hexpand=True, vexpand=True)
-        results_box.add_css_class("boxed-list-separate")
+        def worker() -> None:
+            result = self._resolve_dns(ip)
 
-        scroller = Gtk.ScrolledWindow(hexpand=True, vexpand=True, min_content_height=200)
-        scroller.set_child(results_box)
-        content_box.append(scroller)
+            def update_ui() -> bool:
+                result_row.set_title("Result")
+                result_row.set_subtitle(result)
+                expander_row.set_expanded(True)
+                result_row.queue_draw()
+                expander_row.queue_draw()
+                self.list_box.queue_draw()
+                return False
 
-        dialog.set_child(self._wrap_dialog_content(content_box, title))
-        return dialog, results_box
+            GLib.idle_add(update_ui)
 
-    def _populate_results_list(self, results_box: Gtk.ListBox, results: list[tuple[str, str]]) -> None:
-        """Fill the given list box with latency results."""
-        for name, latency in self._sorted_results_by_latency(results):
-            row = Adw.ActionRow(title=name, subtitle=latency, activatable=False, selectable=False)
-            results_box.append(row)
-
-    def _sorted_results_by_latency(self, results: list[tuple[str, str]]) -> list[tuple[str, str]]:
-        """Sort results by average latency when present; fallback to original order."""
-        def extract_avg(latency_str: str) -> float:
-            if "avg" in latency_str:
-                for part in latency_str.split("|"):
-                    part = part.strip()
-                    if part.startswith("avg"):
-                        try:
-                            return float(part.split()[1])
-                        except (ValueError, IndexError):
-                            return float("inf")
-            return float("inf")
-
-        return sorted(results, key=lambda item: extract_avg(item[1]))
-
-    def _wrap_dialog_content(self, body: Gtk.Widget, title: str) -> Adw.ToolbarView:
-        """Wrap dialog content in a toolbar view with a header bar for a clean title/close layout."""
-        header_bar = Adw.HeaderBar()
-        header_bar.set_title_widget(Gtk.Label(label=title))
-        header_bar.set_show_start_title_buttons(False)
-        header_bar.set_show_end_title_buttons(True)
-
-        toolbar_view = Adw.ToolbarView()
-        toolbar_view.add_top_bar(header_bar)
-        toolbar_view.set_content(body)
-        return toolbar_view
+        threading.Thread(target=worker, daemon=True).start()

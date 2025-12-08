@@ -60,7 +60,7 @@
             </child>
             <child>
               <object class="GtkButton" id="check_button">
-                <property name="label" translatable="yes">Check DNS List</property>
+                <property name="label" translatable="yes">Check All</property>
                 <property name="hexpand">True</property>
                 <property name="halign">fill</property>
                 <property name="height-request">48</property>
