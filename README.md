@@ -23,3 +23,10 @@ meson compile -C builddir
 - UI built with Libadwaita (GTK 4).
 - License: GPL-3.0-or-later.
 - Repository & issues: https://github.com/Neikon/dns_tester
+
+## Flatpak packaging
+The project ships a Flatpak manifest (`es.neikon.dns_tester.json`) and a helper module for Python deps (`python-deps.json`). You can build and run via flatpak-builder, e.g.:
+```bash
+flatpak-builder --user --install --force-clean build-dir es.neikon.dns_tester.json
+flatpak run es.neikon.dns_tester
+```
