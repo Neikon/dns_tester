@@ -221,6 +221,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             def update_ui() -> bool:
                 result_row.set_title("Result")
                 result_row.set_subtitle(result)
+                result_row.add_css_class("property")
                 expander_row.set_expanded(True)
                 result_row.queue_draw()
                 expander_row.queue_draw()
