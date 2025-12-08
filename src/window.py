@@ -19,6 +19,9 @@
 
 import threading
 
+import ipaddress
+import threading
+
 import dns.resolver
 from gi.repository import GLib
 from .aux import TOP_ES_WEBS
@@ -137,11 +140,20 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             dialog.close()
 
         def confirm_dialog(_button: Gtk.Button | None = None) -> None:
-            """Add the row if data is present and close the dialog."""
+            """Add the row if data is valid and close the dialog."""
             name = name_row.get_text().strip()
-            ip_address = ip_row.get_text().strip()
-            if name and ip_address:
-                self._add_row(name, ip_address)
+            ip_text = ip_row.get_text().strip()
+
+            # Validate IP (v4/v6); mark error if invalid.
+            try:
+                ipaddress.ip_address(ip_text)
+                ip_row.remove_css_class("error")
+            except ValueError:
+                ip_row.add_css_class("error")
+                return
+
+            if name and ip_text:
+                self._add_row(name, ip_text)
                 dialog.close()
 
         cancel_btn.connect("clicked", close_dialog)
