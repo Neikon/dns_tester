@@ -11,11 +11,17 @@ DNS Tester is a GTK4/Libadwaita desktop app to compare public DNS resolvers and 
 ## How latency is measured
 For each resolver, the app resolves the 50 top Spanish websites (see `src/aux.py`). It records the round-trip time reported by dnspython for each query and summarizes per resolver: average, best, worst, and error count.
 
-## Running
+## Download, install, and use (Flatpak)
+1. Download the latest `.flatpak` bundle from the releases page: https://github.com/Neikon/dns_tester/releases
+2. Install the bundle (or open it with your software center):
 ```bash
-meson setup builddir
-meson compile -C builddir
-./builddir/dns_tester
+# Replace the filename with the one you downloaded
+flatpak install --user ./dns_tester.flatpak
+```
+3. Launch the app from your desktop menu, or run:
+```bash
+# Launch DNS Tester
+flatpak run es.neikon.dns_tester
 ```
 
 ## Notes
@@ -23,14 +29,7 @@ meson compile -C builddir
 - License: GPL-3.0-or-later.
 - Repository & issues: https://github.com/Neikon/dns_tester
 
-## Flatpak packaging
-The project ships a Flatpak manifest (`es.neikon.dns_tester.json`) and a helper module for Python deps (`python-deps.json`). You can build and run via flatpak-builder, e.g.:
-```bash
-flatpak-builder --user --install --force-clean build-dir es.neikon.dns_tester.json
-flatpak run es.neikon.dns_tester
-```
-
 ## Roadmap
-- Sort servers automatically by their measured latency so the fastest resolvers appear first.
-- (Planned) Persist custom DNS entries across sessions.
-- (Planned) Export/import resolver lists.
+- [ ] Sort servers automatically by their measured latency so the fastest resolvers appear first.
+- [ ] Persist custom DNS entries across sessions.
+- [ ] Export/import resolver lists.

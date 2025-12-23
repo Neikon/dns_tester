@@ -58,7 +58,7 @@ class DnsTesterApplication(Adw.Application):
         about = Adw.AboutDialog(application_name='DNS Tester',
                                 application_icon='es.neikon.dns_tester',
                                 developer_name='neikon',
-                                version='25.12.08',
+                                version='25.12.23',
                                 developers=['neikon'],
                                 copyright='© 2025 neikon')
         about.set_comments(_('DNS Tester checks each server against the 50 most visited websites in Spain to estimate latency and reachability.'))
