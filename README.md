@@ -3,7 +3,6 @@
 DNS Tester is a GTK4/Libadwaita desktop app to compare public DNS resolvers and measure their responsiveness using a real-world workload: the 50 most visited websites in Spain.
 ![Screenshot](screenshots/Captura%20de%20pantalla_20251223_113809.png)
 
-
 ## Features
 
 - Preloaded resolvers (removable/customizable): [src/default_dns.py](https://github.com/Neikon/dns_tester/blob/main/src/default_dns.py) (Google, Cloudflare, Quad9, DNS4EU, AdGuard, and more).
@@ -13,7 +12,7 @@ DNS Tester is a GTK4/Libadwaita desktop app to compare public DNS resolvers and 
 
 ## How latency is measured
 
-For each resolver, the app resolves the 50 top Spanish websites (see `src/aux.py`). It records the round-trip time reported by dnspython for each query and summarizes per resolver: average, best, worst, and error count.
+For each resolver, the app resolves the 50 top Spanish websites (see `src/aux.py`). It records the round-trip time reported by [dnspython](https://www.dnspython.org/ "dnspython") for each query and summarizes per resolver: average, best, worst, and error count.
 
 ## Download, install, and use (Flatpak)
 
