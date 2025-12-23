@@ -34,6 +34,7 @@ flatpak run es.neikon.dns_tester
 ## Notes
 
 - UI built with Libadwaita (GTK 4).
+- Thanks to [dnspython](https://www.dnspython.org/ "dnspython")
 - License: GPL-3.0-or-later.
 - Repository & issues: https://github.com/Neikon/dns_tester
 
