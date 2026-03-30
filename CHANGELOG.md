@@ -28,6 +28,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Open the `Check All` results dialog immediately and update it live with progress so long benchmark runs no longer look like the app has stalled.
 - Moved the `Check All` action from the sidebar footer into the header bar to keep provider navigation focused and free vertical space.
 - Added a tooltip to the header-bar `Check All` button to clarify that it benchmarks every listed DNS transport.
+- Removed an extra root container from the main window layout so the split view hierarchy stays simpler and easier to maintain.
 
 ### Fixed
 - Fixed benchmark JSON export so raw DNS wire payloads no longer break serialization.
