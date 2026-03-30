@@ -127,9 +127,9 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             self.provider_stack.add_titled(
                 provider_page,
                 provider_group.provider_name,
-                provider_display_name(provider_group),
+                provider_group.provider_name,
             )
-            provider_item = Adw.SidebarItem.new(provider_display_name(provider_group))
+            provider_item = Adw.SidebarItem.new(provider_group.provider_name)
             provider_item.set_subtitle(self._provider_summary_line(provider_group))
             provider_item.set_tooltip(provider_group.provider_name)
             # Providers that include user-defined profiles belong to the custom section.

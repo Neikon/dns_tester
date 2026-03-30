@@ -58,8 +58,8 @@
   </screenshots>
 
   <releases>
-    <release version="26.03.30.1731" date="2026-03-30">
-      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1731</url>
+    <release version="26.03.30.1734" date="2026-03-30">
+      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1734</url>
       <description translate="no">
         <p>This release modernizes DNS benchmarking and improves resolver management.</p>
         <ul>
@@ -78,6 +78,7 @@
           <li>Reimplement the provider browser around AdwNavigationSplitView with responsive sidebar-page behavior based on the libadwaita documentation.</li>
           <li>Move the Check All action next to the provider controls as a compact icon button in the sidebar header.</li>
           <li>Use a clearer play-style icon for the Check All action so it better communicates running every benchmark.</li>
+          <li>Remove region flags from provider names in the sidebar to keep the navigation list cleaner.</li>
           <li>Raise the Flatpak runtime to GNOME 50 so the new sidebar widgets are available in the shipped app.</li>
           <li>Integrate the new sidebar layout more cleanly and move the Check All action into a fixed footer at the bottom of the provider list.</li>
         </ul>
