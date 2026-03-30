@@ -1,5 +1,5 @@
 project('dns_tester',
-        version: '26.03.30.0905',
+        version: '26.03.30.1022',
     meson_version: '>= 1.0.0',
   default_options: [ 'warning_level=2', 'werror=false', ],
 )

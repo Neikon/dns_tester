@@ -18,38 +18,24 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import ipaddress
-import importlib.util
-import socket
 import threading
-import time
 from urllib.parse import urlparse
 
-import dns.nameserver
-import dns.query
-import dns.resolver
-from gi.repository import GLib
-from .aux import TOP_ES_WEBS
-from .default_dns import DEFAULT_DNS
 from gi.repository import Adw
+from gi.repository import GLib
 from gi.repository import Gtk
+
+from .aux import TOP_ES_WEBS
+from .benchmark import BenchmarkOptions
+from .benchmark import ResolverEndpoint
+from .benchmark import run_benchmark_sync
+from .default_dns import DEFAULT_DNS
 
 # Supported resolver transports exposed in the add-entry dialog.
 TRANSPORTS = ("Do53", "DoT", "DoH")
-# DoH requires the optional httpx dependency in dnspython.
-HAS_HTTPX = importlib.util.find_spec("httpx") is not None
-# Keep individual attempts short and cap the whole resolver test so the UI stays responsive.
-QUERY_LIFETIME_SECONDS = 1.0
-RESOLVER_TIME_BUDGET_SECONDS = 15.0
-# Probe the resolver first so transport/setup failures stop immediately.
-RESOLVER_PROBE_TIMEOUT_SECONDS = 2.5
-RESOLVER_PROBE_DOMAIN = "."
-RESOLVER_PROBE_RECORD_TYPE = "NS"
-# Try newer DoH transports first, then degrade to the broadest compatibility mode.
-DOH_HTTP_VERSIONS = (
-    dns.query.HTTPVersion.H3,
-    dns.query.HTTPVersion.H2,
-    dns.query.HTTPVersion.DEFAULT,
-)
+# DoH RFC 8484 supports both POST and GET, while POST remains the default choice.
+DOH_METHODS = ("POST", "GET")
+
 
 @Gtk.Template(resource_path='/es/neikon/dns_tester/window.ui')
 class DnsTesterWindow(Adw.ApplicationWindow):
@@ -64,12 +50,17 @@ class DnsTesterWindow(Adw.ApplicationWindow):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Counter keeps track of how many rows exist for incremental labels.
-        self.entry_count = 0
-        # Default domain and record type used for DNS queries.
+        # DNS record type stays configurable internally even if the UI currently defaults to A.
         self.test_record_type = "A"
+        # The console table header is printed once per application run for readable logs.
+        self._printed_console_header = False
+        # Benchmark settings stay in memory and are edited from the preferences dialog.
+        self.cache_enabled = False
+        self.concurrency_value = 10
+        self.warmup_queries_value = 5
+        self.preferences_dialog: Adw.Dialog | None = None
 
-        # Build the list box dynamically so the UI file stays minimal.
+        # The dynamic resolver list stays below the shared controls.
         self.list_box = Gtk.ListBox(
             selection_mode=Gtk.SelectionMode.NONE,
             hexpand=True,
@@ -81,22 +72,119 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             margin_end=12,
         )
 
-        # Add sample rows for DNS entries from the bundled defaults.
-        for name, target, transport, server_name in DEFAULT_DNS:
-            self._add_row(name, target, transport, server_name)
+        for name, target, transport, server_name, doh_method in DEFAULT_DNS:
+            self._add_row(name, target, transport, server_name, doh_method)
 
-        # Insert the list box into the main container.
         self.content_box.append(self.list_box)
 
-    def _transport_details_title(self, transport: str) -> str:
-        """Return the label for the transport-specific extra field."""
-        if transport == "DoT":
-            return "TLS Hostname"
-        return "Bootstrap IP"
+    def _build_spin_row(
+        self,
+        title: str,
+        subtitle: str,
+        value: int,
+        lower: int,
+        upper: int,
+    ) -> tuple[Adw.ActionRow, Gtk.SpinButton]:
+        """Create a preferences row with a spin button suffix."""
+        row = Adw.ActionRow(
+            title=title,
+            subtitle=subtitle,
+            activatable=False,
+            selectable=False,
+        )
+        spin_button = Gtk.SpinButton.new(
+            Gtk.Adjustment(value=value, lower=lower, upper=upper, step_increment=1, page_increment=5),
+            1,
+            0,
+        )
+        row.add_suffix(spin_button)
+        return row, spin_button
+
+    def _ensure_preferences_dialog(self) -> Adw.Dialog:
+        """Build the preferences dialog once and reuse it across openings."""
+        if self.preferences_dialog is not None:
+            return self.preferences_dialog
+
+        dialog = Adw.Dialog.new()
+        dialog.set_title("Preferences")
+        dialog.set_content_width(520)
+        dialog.set_content_height(460)
+        dialog.set_can_close(True)
+
+        toolbar_view = Adw.ToolbarView()
+        header_bar = Adw.HeaderBar()
+        toolbar_view.add_top_bar(header_bar)
+
+        preferences_page = Adw.PreferencesPage(
+            title="Benchmark",
+            description="Use identical settings across providers to keep transport comparisons fair.",
+        )
+        benchmark_group = Adw.PreferencesGroup(
+            title="Benchmark Settings",
+            description="These values apply to all DNS rows and to the Check All action.",
+        )
+
+        cache_row = Adw.SwitchRow(
+            title="Warm Cache",
+            subtitle="Prime a local DNS cache before the measured phase",
+            active=self.cache_enabled,
+        )
+        benchmark_group.add(cache_row)
+
+        concurrency_row, concurrency_spin = self._build_spin_row(
+            "Concurrency",
+            "Maximum number of workers used during the measured phase",
+            self.concurrency_value,
+            1,
+            50,
+        )
+        benchmark_group.add(concurrency_row)
+
+        warmup_row, warmup_spin = self._build_spin_row(
+            "Warm-up Queries",
+            "Number of uncaptured warm-up queries before measuring",
+            self.warmup_queries_value,
+            0,
+            20,
+        )
+        benchmark_group.add(warmup_row)
+
+        preferences_page.add(benchmark_group)
+        toolbar_view.set_content(preferences_page)
+        dialog.set_child(toolbar_view)
+
+        # Widgets are stored on the dialog so values can be read back on every presentation.
+        dialog.cache_row = cache_row
+        dialog.concurrency_spin = concurrency_spin
+        dialog.warmup_spin = warmup_spin
+
+        def sync_preferences(_dialog: Adw.Dialog) -> None:
+            """Keep the in-memory settings aligned with the dialog state."""
+            self.cache_enabled = dialog.cache_row.get_active()
+            self.concurrency_value = int(dialog.concurrency_spin.get_value())
+            self.warmup_queries_value = int(dialog.warmup_spin.get_value())
+
+        dialog.connect("closed", sync_preferences)
+        self.preferences_dialog = dialog
+        return dialog
+
+    def show_preferences_dialog(self) -> None:
+        """Present the shared preferences dialog and sync its current values."""
+        dialog = self._ensure_preferences_dialog()
+        dialog.cache_row.set_active(self.cache_enabled)
+        dialog.concurrency_spin.set_value(self.concurrency_value)
+        dialog.warmup_spin.set_value(self.warmup_queries_value)
+        dialog.present(self)
 
     def _transport_summary(self, transport: str, target: str) -> str:
         """Build a compact subtitle for the expander row."""
         return f"{transport} | {target}"
+
+    def _transport_detail_title(self, transport: str) -> str:
+        """Return the appropriate title for the optional transport-specific field."""
+        if transport == "DoT":
+            return "TLS Hostname"
+        return "DoH Method"
 
     def _is_ip_address(self, value: str) -> bool:
         """Return whether the provided string is a valid IPv4 or IPv6 address."""
@@ -117,123 +205,47 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             return False
         return True
 
-    def _resolve_endpoint_address(self, target: str, port: int) -> str:
-        """Resolve a hostname to an IP address when the transport requires a socket destination."""
-        if self._is_ip_address(target):
-            return target
-
-        # Use the system resolver only as bootstrap so users can enter hostnames directly.
-        for family, socktype, proto, _canonname, sockaddr in socket.getaddrinfo(target, port, type=socket.SOCK_STREAM):
-            if family in (socket.AF_INET, socket.AF_INET6) and socktype == socket.SOCK_STREAM and proto:
-                return sockaddr[0]
-
-        raise RuntimeError(f"Could not resolve address for {target}")
-
-    def _resolve_transport_target(self, target: str, transport: str, server_name: str | None) -> tuple[str, str | None]:
-        """Resolve transport-specific connection details and return the socket address plus hostname."""
-        if transport == "Do53":
-            return self._resolve_endpoint_address(target, 53), None
-        if transport == "DoT":
-            hostname = server_name
-            if not hostname and self._is_hostname(target):
-                hostname = target
-            return self._resolve_endpoint_address(target, 853), hostname
-        return target, server_name
-
-    def _build_nameserver(
-        self,
-        target: str,
-        transport: str,
-        server_name: str | None,
-        resolved_target: str | None = None,
-    ) -> dns.nameserver.Nameserver:
-        """Create the appropriate dnspython nameserver object for the selected transport."""
-        if transport == "Do53":
-            return dns.nameserver.Do53Nameserver(resolved_target or self._resolve_endpoint_address(target, 53))
-        if transport == "DoT":
-            return dns.nameserver.DoTNameserver(
-                resolved_target or self._resolve_endpoint_address(target, 853),
-                port=853,
-                hostname=server_name,
-            )
-        if transport == "DoH":
-            if not HAS_HTTPX:
-                raise RuntimeError("DoH requires the optional httpx dependency")
-            # Use H3 first; DoH fallback across versions is handled per query attempt.
-            return dns.nameserver.DoHNameserver(
-                target,
-                http_version=dns.query.HTTPVersion.H3,
-            )
-        raise ValueError(f"Unsupported transport: {transport}")
-
-    def _resolve_single_domain(
-        self,
-        resolver: dns.resolver.Resolver,
-        domain: str,
-        transport: str,
-        target: str,
-        remaining_budget: float,
-        record_type: str | None = None,
-        preferred_http_version=None,
-    ):
-        """Resolve one domain, retrying DoH with lower HTTP versions when needed."""
-        last_error: Exception | None = None
-        selected_http_version = None
-        query_record_type = record_type or self.test_record_type
-
-        if transport != "DoH":
-            answer = resolver.resolve(
-                domain,
-                query_record_type,
-                lifetime=min(resolver.lifetime, remaining_budget),
-            )
-            return answer, selected_http_version
-
-        original_nameserver = resolver.nameservers[0]
-        http_versions = DOH_HTTP_VERSIONS
-        if preferred_http_version is not None:
-            http_versions = (preferred_http_version,)
-
-        for http_version in http_versions:
-            try:
-                resolver.nameservers = [
-                    dns.nameserver.DoHNameserver(
-                        target,
-                        http_version=http_version,
-                    )
-                ]
-                answer = resolver.resolve(
-                    domain,
-                    query_record_type,
-                    lifetime=min(resolver.lifetime, remaining_budget),
-                )
-                selected_http_version = http_version.name
-                return answer, selected_http_version
-            except Exception as error:
-                last_error = error
-                print(
-                    f"[DNS check] DoH fallback {target} {domain} failed on {http_version.name}: {error}",
-                    flush=True,
-                )
-        resolver.nameservers = [original_nameserver]
-        assert last_error is not None
-        raise last_error
-
-    def _probe_resolver(self, resolver: dns.resolver.Resolver, transport: str, target: str):
-        """Run a fast resolver probe so endpoint failures surface before the full benchmark."""
-        start_time = time.monotonic()
-        answer, selected_http_version = self._resolve_single_domain(
-            resolver,
-            RESOLVER_PROBE_DOMAIN,
-            transport,
-            target,
-            RESOLVER_PROBE_TIMEOUT_SECONDS,
-            record_type=RESOLVER_PROBE_RECORD_TYPE,
+    def _benchmark_options(self) -> BenchmarkOptions:
+        """Collect the current shared benchmark settings from the UI."""
+        return BenchmarkOptions(
+            query_type=self.test_record_type,
+            concurrency=self.concurrency_value,
+            warmup_queries=self.warmup_queries_value,
+            cache_enabled=self.cache_enabled,
         )
-        latency_ms = (time.monotonic() - start_time) * 1000.0
-        return answer, selected_http_version, latency_ms
 
-    def _add_row(self, name: str, target: str, transport: str, server_name: str | None = None) -> None:
+    def _benchmark_endpoint(self, expander_row: Adw.ExpanderRow) -> ResolverEndpoint:
+        """Build the benchmark endpoint consumed by the transport engine."""
+        return ResolverEndpoint(
+            name=expander_row.get_title(),
+            transport=getattr(expander_row, "dns_transport", "Do53"),
+            target=getattr(expander_row, "dns_target", ""),
+            tls_hostname=getattr(expander_row, "dns_server_name", None),
+            bootstrap_address=getattr(expander_row, "dns_resolved_target", None),
+            doh_method=getattr(expander_row, "dns_doh_method", "POST"),
+        )
+
+    def _transport_detail_line(self, result) -> str:
+        """Render transport-specific metrics in a single line."""
+        detail_parts: list[str] = []
+        if result.resolved_target and result.resolved_target != result.target:
+            detail_parts.append(f"ip {result.resolved_target}")
+        if result.connection_setup_ms is not None:
+            detail_parts.append(f"connect {result.connection_setup_ms:.1f} ms")
+        if result.average_ttfb_ms is not None:
+            detail_parts.append(f"TTFB {result.average_ttfb_ms:.1f} ms")
+        if result.http_version:
+            detail_parts.append(result.http_version)
+        return " | ".join(detail_parts) if detail_parts else "No extra transport metrics"
+
+    def _add_row(
+        self,
+        name: str,
+        target: str,
+        transport: str,
+        server_name: str | None = None,
+        doh_method: str = "POST",
+    ) -> None:
         """Create and append an expander row with the given resolver settings."""
         expander_row = Adw.ExpanderRow(
             title=name,
@@ -241,21 +253,20 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             activatable=False,
             selectable=False,
         )
-        # Store the resolver settings on the row so test actions do not depend on UI labels.
+        # Row metadata keeps the benchmark engine independent from the rendered strings.
         expander_row.dns_target = target
         expander_row.dns_transport = transport
         expander_row.dns_server_name = server_name
+        expander_row.dns_doh_method = doh_method
         expander_row.dns_resolved_target = None
+        expander_row.latest_result_json = None
 
         remove_button = Gtk.Button.new_from_icon_name("user-trash-symbolic")
         remove_button.add_css_class("destructive-action")
         remove_button.add_css_class("flat")
         remove_button.set_tooltip_text("Remove entry")
-        remove_button.connect(
-            "clicked",
-            lambda _btn: self.list_box.remove(expander_row),
-        )
-        # Configuration rows keep the transport details visible when the row is expanded.
+        remove_button.connect("clicked", lambda _btn: self.list_box.remove(expander_row))
+
         endpoint_row = Adw.ActionRow(
             title="Endpoint",
             subtitle=target,
@@ -270,41 +281,77 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         )
         expander_row.add_row(endpoint_row)
         expander_row.add_row(transport_row)
-        if server_name and server_name != target:
-            extra_row = Adw.ActionRow(
-                title=self._transport_details_title(transport),
-                subtitle=server_name,
+
+        detail_value = None
+        if transport == "DoT" and server_name and server_name != target:
+            detail_value = server_name
+        if transport == "DoH":
+            detail_value = doh_method
+        if detail_value:
+            detail_row = Adw.ActionRow(
+                title=self._transport_detail_title(transport),
+                subtitle=detail_value,
                 activatable=False,
                 selectable=False,
             )
-            expander_row.add_row(extra_row)
+            expander_row.add_row(detail_row)
 
-        # Nested action row to display results or extra info.
         result_row = Adw.ActionRow(
             title="Results pending",
             subtitle="",
             activatable=False,
             selectable=False,
         )
+        metrics_row = Adw.ActionRow(
+            title="Metrics",
+            subtitle="First query, cache mode, and worker settings will appear here",
+            activatable=False,
+            selectable=False,
+        )
+        transport_metrics_row = Adw.ActionRow(
+            title="Transport Metrics",
+            subtitle="Connection and protocol details will appear here",
+            activatable=False,
+            selectable=False,
+        )
+
         expander_row.result_row = result_row
+        expander_row.metrics_row = metrics_row
+        expander_row.transport_metrics_row = transport_metrics_row
+
         test_button = Gtk.Button.new_from_icon_name("media-playback-start-symbolic")
         test_button.add_css_class("flat")
         test_button.set_tooltip_text("Test this DNS")
-
-        test_button.connect("clicked", self._run_test_async, expander_row, result_row)
+        test_button.connect("clicked", self._run_test_async, expander_row)
         result_row.add_suffix(test_button)
-        expander_row.add_row(result_row)
 
+        copy_button = Gtk.Button.new_from_icon_name("edit-copy-symbolic")
+        copy_button.add_css_class("flat")
+        copy_button.set_tooltip_text("Copy benchmark JSON")
+        copy_button.set_sensitive(False)
+
+        def copy_json(_button: Gtk.Button) -> None:
+            """Copy the latest structured result so runs can be exported elsewhere."""
+            latest_result_json = getattr(expander_row, "latest_result_json", None)
+            if latest_result_json:
+                self.get_display().get_clipboard().set_text(latest_result_json)
+
+        copy_button.connect("clicked", copy_json)
+        transport_metrics_row.add_suffix(copy_button)
+        expander_row.copy_button = copy_button
+
+        expander_row.add_row(result_row)
+        expander_row.add_row(metrics_row)
+        expander_row.add_row(transport_metrics_row)
         expander_row.add_suffix(remove_button)
         self.list_box.append(expander_row)
-        self.entry_count += 1
 
     def _show_add_dialog(self) -> None:
         """Show an Adwaita dialog asking for resolver settings, then append a row on confirm."""
         dialog = Adw.Dialog.new()
         dialog.set_title("Add DNS Entry")
-        dialog.set_content_width(360)
-        dialog.set_content_height(320)
+        dialog.set_content_width(380)
+        dialog.set_content_height(380)
         dialog.set_can_close(True)
 
         content_box = Gtk.Box(
@@ -317,7 +364,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         )
         name_row = Adw.EntryRow(title="Name")
         target_row = Adw.EntryRow(title="IP Address, Hostname, or HTTPS URL")
-        # A dropdown keeps transport selection explicit instead of guessing from the input.
+
         transport_model = Gtk.StringList()
         for transport in TRANSPORTS:
             transport_model.append(transport)
@@ -330,11 +377,28 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         )
         transport_action_row.add_suffix(transport_dropdown)
 
+        tls_row = Adw.EntryRow(title="TLS Hostname (optional)")
+        tls_row.set_visible(False)
+
+        doh_method_model = Gtk.StringList()
+        for method in DOH_METHODS:
+            doh_method_model.append(method)
+        doh_method_dropdown = Gtk.DropDown(model=doh_method_model)
+        doh_method_row = Adw.ActionRow(
+            title="DoH Method",
+            subtitle="RFC 8484 transport method",
+            activatable=False,
+            selectable=False,
+        )
+        doh_method_row.add_suffix(doh_method_dropdown)
+        doh_method_row.set_visible(False)
+
         content_box.append(name_row)
         content_box.append(target_row)
         content_box.append(transport_action_row)
+        content_box.append(tls_row)
+        content_box.append(doh_method_row)
 
-        # Action buttons to cancel or confirm the dialog; stretched to share full width.
         button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6, hexpand=True)
         button_box.set_homogeneous(True)
         cancel_btn = Gtk.Button(label="_Cancel", use_underline=True, hexpand=True)
@@ -350,22 +414,26 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             dialog.close()
 
         def update_transport_ui(*_args) -> None:
-            """Refresh dialog labels so the required input matches the selected transport."""
+            """Refresh labels so the dialog matches the selected transport."""
             transport = TRANSPORTS[transport_dropdown.get_selected()]
             target_row.remove_css_class("error")
+            tls_row.remove_css_class("error")
             if transport == "Do53":
                 target_row.set_title("IP Address or Hostname")
-                transport_action_row.set_subtitle("Standard DNS over UDP/TCP on port 53")
+                transport_action_row.set_subtitle("Classic UDP/TCP recursive DNS")
+                tls_row.set_visible(False)
+                doh_method_row.set_visible(False)
                 return
             if transport == "DoT":
                 target_row.set_title("IP Address or Hostname")
-                transport_action_row.set_subtitle("Encrypted DNS over TLS on port 853")
+                transport_action_row.set_subtitle("DNS over TLS on port 853")
+                tls_row.set_visible(True)
+                doh_method_row.set_visible(False)
                 return
             target_row.set_title("HTTPS URL")
-            if HAS_HTTPX:
-                transport_action_row.set_subtitle("Encrypted DNS over HTTPS")
-            else:
-                transport_action_row.set_subtitle("Encrypted DNS over HTTPS (httpx missing)")
+            transport_action_row.set_subtitle("DNS over HTTPS with connection reuse")
+            tls_row.set_visible(False)
+            doh_method_row.set_visible(True)
 
         def maybe_autoselect_transport(*_args) -> None:
             """Switch to DoH automatically when the endpoint clearly is a HTTPS URL."""
@@ -373,23 +441,28 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                 transport_dropdown.set_selected(TRANSPORTS.index("DoH"))
 
         def confirm_dialog(_button: Gtk.Button | None = None) -> None:
-            """Add the row if data is valid and close the dialog."""
+            """Validate the row settings and add the resolver when they are coherent."""
             name = name_row.get_text().strip()
             target = target_row.get_text().strip()
             transport = TRANSPORTS[transport_dropdown.get_selected()]
+            tls_hostname = tls_row.get_text().strip() or None
+            doh_method = DOH_METHODS[doh_method_dropdown.get_selected()]
 
             target_row.remove_css_class("error")
+            tls_row.remove_css_class("error")
 
-            # Standard DNS and DoT accept either a raw IP or a hostname that we bootstrap locally.
             if transport in ("Do53", "DoT") and not (self._is_ip_address(target) or self._is_hostname(target)):
                 target_row.add_css_class("error")
                 return
             if transport == "DoH" and not self._is_https_url(target):
                 target_row.add_css_class("error")
                 return
+            if transport == "DoT" and tls_hostname and not self._is_hostname(tls_hostname):
+                tls_row.add_css_class("error")
+                return
 
             if name and target:
-                self._add_row(name, target, transport, None)
+                self._add_row(name, target, transport, tls_hostname, doh_method)
                 dialog.close()
 
         cancel_btn.connect("clicked", close_dialog)
@@ -409,178 +482,101 @@ class DnsTesterWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback()
     def on_check_button_clicked(self, _button: Gtk.Button) -> None:
-        """Run individual checks sequentially and update each row inline."""
+        """Run all resolver benchmarks with the shared benchmark settings."""
         row = self.list_box.get_first_child()
-        print("[DNS check] Running all rows...")
         while row is not None:
             if isinstance(row, Adw.ExpanderRow):
-                result_row = getattr(row, "result_row", None)
-                if isinstance(result_row, Adw.ActionRow):
-                    self._run_test_async(None, row, result_row)
+                self._run_test_async(None, row)
             row = row.get_next_sibling()
 
-    def _resolve_dns(
+    def _run_test_async(
         self,
-        target: str,
-        transport: str,
-        server_name: str | None,
-        resolved_target: str | None = None,
-        progress_callback=None,
-    ) -> tuple[str, str | None]:
-        """Resolve many domains via the given DNS server and report latency stats."""
-        resolver = dns.resolver.Resolver(configure=False)
-        resolver.lifetime = QUERY_LIFETIME_SECONDS
-        try:
-            if resolved_target is None:
-                resolved_target, server_name = self._resolve_transport_target(target, transport, server_name)
-            resolver.nameservers = [self._build_nameserver(target, transport, server_name, resolved_target)]
-        except Exception as error:
-            return f"{type(error).__name__}: {error}", resolved_target
-
-        latencies: list[float] = []
-        errors = 0
-        last_error: Exception | None = None
-        tested = 0
-        total = len(TOP_ES_WEBS)
-        start_time = time.monotonic()
-        used_http_version = None
-
-        print(f"[DNS check] Start {transport} {target}", flush=True)
-        if progress_callback is not None:
-            progress_callback(-1, total, "Resolver preflight")
-
-        try:
-            _probe_answer, selected_http_version, probe_latency_ms = self._probe_resolver(
-                resolver,
-                transport,
-                target,
-            )
-            if selected_http_version is not None:
-                used_http_version = selected_http_version
-                resolver.nameservers = [
-                    dns.nameserver.DoHNameserver(
-                        target,
-                        http_version=dns.query.HTTPVersion[selected_http_version],
-                    )
-                ]
-            print(
-                f"[DNS check] Preflight OK {transport} {target}: {probe_latency_ms:.1f} ms",
-                flush=True,
-            )
-        except Exception as error:
-            print(f"[DNS check] Preflight failed {transport} {target}: {error}", flush=True)
-            return f"preflight failed: {type(error).__name__}: {error}", resolved_target
-
-        for domain in TOP_ES_WEBS:
-            elapsed = time.monotonic() - start_time
-            remaining_budget = RESOLVER_TIME_BUDGET_SECONDS - elapsed
-            if remaining_budget <= 0:
-                print(
-                    f"[DNS check] Budget exceeded for {transport} {target} after {tested}/{total} domains",
-                    flush=True,
-                )
-                break
-
-            if progress_callback is not None:
-                progress_callback(tested, total, domain)
-
-            try:
-                answer, selected_http_version = self._resolve_single_domain(
-                    resolver,
-                    domain,
-                    transport,
-                    target,
-                    remaining_budget,
-                    preferred_http_version=dns.query.HTTPVersion[used_http_version] if used_http_version else None,
-                )
-                if selected_http_version is not None:
-                    used_http_version = selected_http_version
-                latency_ms = (answer.response.time or 0) * 1000.0
-                latencies.append(latency_ms)
-            except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.resolver.Timeout) as error:
-                errors += 1
-                last_error = error
-            except Exception as error:
-                errors += 1
-                last_error = error
-            finally:
-                tested += 1
-
-        if not latencies:
-            if last_error is not None:
-                return f"{type(last_error).__name__}: {last_error}", resolved_target
-            if tested < total:
-                return f"no successful responses | tested {tested}/{total} within time budget", resolved_target
-            return "no successful responses", resolved_target
-
-        best = min(latencies)
-        worst = max(latencies)
-        avg = sum(latencies) / len(latencies)
-        summary = f"avg {avg:.1f} ms | best {best:.1f} ms | worst {worst:.1f} ms"
-        if errors:
-            summary += f" | errors {errors}"
-        if tested < total:
-            summary += f" | tested {tested}/{total}"
-        if used_http_version is not None:
-            summary += f" | {used_http_version}"
-        print(f"[DNS check] Finish {transport} {target}: {summary}", flush=True)
-        return summary, resolved_target
-
-    def _run_test_async(self, _btn: Gtk.Button | None, expander_row: Adw.ExpanderRow, result_row: Adw.ActionRow) -> None:
-        """Resolve only this DNS in a worker thread and update its nested result row."""
-        target = getattr(expander_row, "dns_target", "")
-        transport = getattr(expander_row, "dns_transport", "Do53")
-        server_name = getattr(expander_row, "dns_server_name", None)
-        resolved_target = getattr(expander_row, "dns_resolved_target", None)
-        if not target:
-            result_row.set_title("No server set")
-            result_row.set_subtitle("")
-            return
+        _button: Gtk.Button | None,
+        expander_row: Adw.ExpanderRow,
+    ) -> None:
+        """Execute the benchmark in a worker thread and update the row from the GTK main loop."""
+        result_row = getattr(expander_row, "result_row")
+        metrics_row = getattr(expander_row, "metrics_row")
+        transport_metrics_row = getattr(expander_row, "transport_metrics_row")
+        copy_button = getattr(expander_row, "copy_button")
+        endpoint = self._benchmark_endpoint(expander_row)
+        options = self._benchmark_options()
 
         result_row.set_title("Testing...")
-        result_row.set_subtitle(f"Working over {transport}...")
+        result_row.set_subtitle("Preparing transport benchmark...")
+        metrics_row.set_title("Metrics")
+        metrics_row.set_subtitle("Waiting for results...")
+        transport_metrics_row.set_title("Transport Metrics")
+        transport_metrics_row.set_subtitle("Waiting for results...")
+        copy_button.set_sensitive(False)
         expander_row.set_expanded(True)
         self.list_box.queue_draw()
 
         def worker() -> None:
-            def update_progress(done: int, total: int, domain: str) -> bool:
-                """Update the row while the worker is still probing domains."""
-                if done < 0:
+            def update_progress(phase: str, current: int, total: int, detail: str) -> bool:
+                """Reflect benchmark progress in the row while the worker thread is running."""
+                if phase == "preflight":
                     result_row.set_title("Testing... preflight")
-                    result_row.set_subtitle(f"{transport} | {domain}")
-                    result_row.queue_draw()
-                    return False
-                result_row.set_title(f"Testing... {done + 1}/{total}")
-                result_row.set_subtitle(f"{transport} | {domain}")
+                    result_row.set_subtitle(detail)
+                elif phase == "warmup":
+                    result_row.set_title(f"Testing... warm-up {current}/{total}")
+                    result_row.set_subtitle(detail)
+                elif phase == "cache":
+                    result_row.set_title("Testing... cache prime")
+                    result_row.set_subtitle(detail)
+                else:
+                    result_row.set_title(f"Testing... {current}/{total}")
+                    result_row.set_subtitle(detail)
                 result_row.queue_draw()
                 return False
 
             try:
-                result, resolved_value = self._resolve_dns(
-                    target,
-                    transport,
-                    server_name,
-                    resolved_target,
-                    progress_callback=lambda done, total, domain: GLib.idle_add(
+                result = run_benchmark_sync(
+                    endpoint,
+                    TOP_ES_WEBS,
+                    options,
+                    progress_callback=lambda phase, current, total, detail: GLib.idle_add(
                         update_progress,
-                        done,
+                        phase,
+                        current,
                         total,
-                        domain,
+                        detail,
                     ),
                 )
             except Exception as error:
-                result = f"{type(error).__name__}: {error}"
-                resolved_value = resolved_target
+                result = None
+                error_text = f"{type(error).__name__}: {error}"
 
             def update_ui() -> bool:
-                expander_row.dns_resolved_target = resolved_value
+                """Publish the final benchmark result after the worker thread finishes."""
+                if result is None:
+                    expander_row.latest_result_json = None
+                    result_row.set_title("Result")
+                    result_row.set_subtitle(error_text)
+                    metrics_row.set_title("Metrics")
+                    metrics_row.set_subtitle("Benchmark aborted")
+                    transport_metrics_row.set_title("Transport Metrics")
+                    transport_metrics_row.set_subtitle("No transport details collected")
+                    copy_button.set_sensitive(False)
+                    return False
+
+                expander_row.dns_resolved_target = result.resolved_target
+                expander_row.latest_result_json = result.to_json()
                 result_row.set_title("Result")
-                result_row.set_subtitle(result)
+                result_row.set_subtitle(result.summary_line())
+                metrics_row.set_title("Metrics")
+                metrics_row.set_subtitle(result.detail_line())
+                transport_metrics_row.set_title("Transport Metrics")
+                transport_metrics_row.set_subtitle(self._transport_detail_line(result))
+                copy_button.set_sensitive(True)
                 result_row.add_css_class("property")
-                expander_row.set_expanded(True)
-                result_row.queue_draw()
                 expander_row.queue_draw()
                 self.list_box.queue_draw()
+                if not self._printed_console_header:
+                    print("[DNS benchmark]", flush=False)
+                    print(result.table_header(), flush=False)
+                    self._printed_console_header = True
+                print(result.table_row(), flush=True)
                 return False
 
             GLib.idle_add(update_ui)
