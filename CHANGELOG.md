@@ -18,6 +18,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Refactored bundled DNS metadata to use stable IDs and structured origin tags instead of hardcoded flag text in provider names.
 - Updated the About dialog to read the latest release notes from the AppStream metainfo file.
 - Ignored the local `.codex` workspace marker so it no longer shows up in repository status.
+- Documented that completed Git work must be pushed automatically so branches do not remain local-only by accident.
 
 ### Fixed
 - Fixed benchmark JSON export so raw DNS wire payloads no longer break serialization.
