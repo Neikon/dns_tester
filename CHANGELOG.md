@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 ## [Unreleased]
 
 ### Changed
+- Expanded the bundled AdGuard catalog to include the official Default, Non-filtering, and Family Protection profiles across Do53, DoT, and DoH.
 - Updated the README screenshot to the current provider-browser UI and removed the outdated image asset.
 - Added bundled provider icons to the sidebar while keeping a generic fallback icon for user-defined DNS providers.
 - Replaced the placeholder ControlD sidebar icon with the favicon published on the ControlD website.

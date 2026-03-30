@@ -60,7 +60,7 @@ class DnsTesterApplication(Adw.Application):
         about = Adw.AboutDialog(application_name='DNS Tester',
                                 application_icon='es.neikon.dns_tester',
                                 developer_name='neikon',
-                                version='26.03.30.2049',
+                                version='26.03.30.2059',
                                 developers=['neikon'],
                                 copyright='© 2025 neikon')
         if release_notes and hasattr(about, "set_release_notes"):
