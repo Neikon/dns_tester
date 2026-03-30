@@ -32,8 +32,13 @@ from .benchmark import BenchmarkOptions
 from .benchmark import ResolverEndpoint
 from .benchmark import run_benchmark_sync
 from .default_dns import DEFAULT_DNS
+from .dns_groups import DnsProfileGroup
+from .dns_groups import group_display_name
+from .dns_groups import group_dns_entries
+from .dns_groups import group_transport_summary
+from .dns_groups import variant_display_name
+from .dns_store import DnsEntry
 from .dns_store import DnsStateStore
-from .region_info import decorate_name_with_regions
 from .region_info import format_region_summary
 
 # Supported resolver transports exposed in the add-entry dialog.
@@ -70,6 +75,8 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         self.check_all_results: list[tuple[str, object]] = []
         # DNS state is persisted separately from the bundled catalog.
         self.dns_store = DnsStateStore()
+        self.group_rows: list[Adw.ExpanderRow] = []
+        self.variant_rows: list[Adw.ExpanderRow] = []
 
         # The dynamic resolver list stays below the shared controls.
         self.list_box = Gtk.ListBox(
@@ -83,19 +90,8 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             margin_end=12,
         )
 
-        for entry in self.dns_store.load_entries(DEFAULT_DNS):
-            self._add_row(
-                entry.id,
-                entry.name,
-                entry.regions,
-                entry.target,
-                entry.transport,
-                entry.tls_hostname,
-                entry.doh_method,
-                entry.is_default,
-            )
-
         self.content_box.append(self.list_box)
+        self._reload_dns_rows()
 
     def _reload_dns_rows(self) -> None:
         """Rebuild the visible DNS list from persisted state."""
@@ -105,17 +101,11 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             self.list_box.remove(row)
             row = next_row
 
-        for entry in self.dns_store.load_entries(DEFAULT_DNS):
-            self._add_row(
-                entry.id,
-                entry.name,
-                entry.regions,
-                entry.target,
-                entry.transport,
-                entry.tls_hostname,
-                entry.doh_method,
-                entry.is_default,
-            )
+        self.group_rows = []
+        self.variant_rows = []
+
+        for group in group_dns_entries(self.dns_store.load_entries(DEFAULT_DNS)):
+            self._add_group_row(group)
 
     def _reset_default_entries(self) -> None:
         """Restore bundled DNS entries that were previously hidden."""
@@ -237,9 +227,63 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         dialog.warmup_spin.set_value(self.warmup_queries_value)
         dialog.present(self)
 
-    def _transport_summary(self, transport: str, target: str) -> str:
-        """Build a compact subtitle for the expander row."""
-        return f"{transport} | {target}"
+    def _group_subtitle(self, group: DnsProfileGroup) -> str:
+        """Build a compact subtitle for one provider/profile card."""
+        return f"{group.profile_name} · {group_transport_summary(group)}"
+
+    def _variant_subtitle(self, target: str) -> str:
+        """Keep the nested transport row subtitle focused on the endpoint."""
+        return target
+
+    def _variant_rows_for_group(self, group_row: Adw.ExpanderRow) -> list[Adw.ExpanderRow]:
+        """Return the transport rows currently attached to one provider/profile card."""
+        return list(getattr(group_row, "dns_variant_rows", []))
+
+    def _update_group_summary(self, group_row: Adw.ExpanderRow) -> None:
+        """Summarize the latest transport results at the provider/profile level."""
+        summary_row = getattr(group_row, "profile_result_row")
+        variant_rows = self._variant_rows_for_group(group_row)
+        measured_variants = [
+            (variant_row, getattr(variant_row, "latest_benchmark_result", None))
+            for variant_row in variant_rows
+            if getattr(variant_row, "latest_benchmark_result", None) is not None
+        ]
+
+        if not measured_variants:
+            summary_row.set_title("Profile Results")
+            summary_row.set_subtitle("Test all variants to compare transports inside this profile")
+            return
+
+        successful_variants = [
+            (variant_row, result)
+            for variant_row, result in measured_variants
+            if result.error is None and result.average_latency_ms is not None
+        ]
+        failed_variants = len(measured_variants) - len(successful_variants)
+        tested_count = len(measured_variants)
+        total_count = len(variant_rows)
+
+        if successful_variants:
+            best_variant_row, best_result = min(
+                successful_variants,
+                key=lambda item: (
+                    item[1].average_latency_ms if item[1].average_latency_ms is not None else float("inf"),
+                    item[1].p95_latency_ms if item[1].p95_latency_ms is not None else float("inf"),
+                ),
+            )
+            summary_parts = [
+                f"Best {best_variant_row.dns_transport}",
+                best_result.summary_line(),
+                f"tested {tested_count}/{total_count}",
+            ]
+            if failed_variants:
+                summary_parts.append(f"failed {failed_variants}")
+            summary_row.set_title("Profile Results")
+            summary_row.set_subtitle(" | ".join(summary_parts))
+            return
+
+        summary_row.set_title("Profile Results")
+        summary_row.set_subtitle(f"tested {tested_count}/{total_count} | failed {failed_variants}")
 
     def _transport_detail_title(self, transport: str) -> str:
         """Return the appropriate title for the optional transport-specific field."""
@@ -278,7 +322,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
     def _benchmark_endpoint(self, expander_row: Adw.ExpanderRow) -> ResolverEndpoint:
         """Build the benchmark endpoint consumed by the transport engine."""
         return ResolverEndpoint(
-            name=getattr(expander_row, "dns_name", expander_row.get_title()),
+            name=getattr(expander_row, "dns_display_name", expander_row.get_title()),
             transport=getattr(expander_row, "dns_transport", "Do53"),
             target=getattr(expander_row, "dns_target", ""),
             tls_hostname=getattr(expander_row, "dns_server_name", None),
@@ -345,7 +389,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             self._show_error_dialog("Could not save DNS changes", str(error))
             return
 
-        self.list_box.remove(expander_row)
+        self._reload_dns_rows()
 
     def _ranked_results(
         self,
@@ -445,79 +489,70 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         self.check_all_results = []
         self.check_all_pending = 0
 
-    def _add_row(
-        self,
-        entry_id: str,
-        name: str,
-        regions: list[str],
-        target: str,
-        transport: str,
-        server_name: str | None = None,
-        doh_method: str = "POST",
-        is_default: bool = False,
-    ) -> None:
-        """Create and append an expander row with the given resolver settings."""
-        expander_row = Adw.ExpanderRow(
-            title=decorate_name_with_regions(name, regions),
-            subtitle=self._transport_summary(transport, target),
+    def _run_group_tests(self, group_row: Adw.ExpanderRow) -> None:
+        """Benchmark every transport variant that belongs to one provider/profile card."""
+        group_row.set_expanded(True)
+        for variant_row in self._variant_rows_for_group(group_row):
+            self._run_test_async(None, variant_row)
+
+    def _build_variant_row(self, group_row: Adw.ExpanderRow, entry: DnsEntry) -> Adw.ExpanderRow:
+        """Create one nested transport row inside a provider/profile group."""
+        variant_row = Adw.ExpanderRow(
+            title=entry.transport,
+            subtitle=self._variant_subtitle(entry.target),
             activatable=False,
             selectable=False,
         )
-        # Row metadata keeps the benchmark engine independent from the rendered strings.
-        expander_row.dns_entry_id = entry_id
-        expander_row.dns_is_default = is_default
-        expander_row.dns_name = name
-        expander_row.dns_regions = list(regions)
-        expander_row.dns_target = target
-        expander_row.dns_transport = transport
-        expander_row.dns_server_name = server_name
-        expander_row.dns_doh_method = doh_method
-        expander_row.dns_resolved_target = None
-        expander_row.latest_result_json = None
+        # Variant metadata keeps benchmark logic independent from the nested UI layout.
+        variant_row.dns_entry_id = entry.id
+        variant_row.dns_is_default = entry.is_default
+        variant_row.dns_provider_name = entry.provider_name
+        variant_row.dns_profile_name = entry.profile_name
+        variant_row.dns_display_name = variant_display_name(entry)
+        variant_row.dns_regions = list(entry.regions)
+        variant_row.dns_target = entry.target
+        variant_row.dns_transport = entry.transport
+        variant_row.dns_server_name = entry.tls_hostname
+        variant_row.dns_doh_method = entry.doh_method
+        variant_row.dns_resolved_target = None
+        variant_row.dns_group_row = group_row
+        variant_row.latest_result_json = None
+        variant_row.latest_benchmark_result = None
 
         remove_button = Gtk.Button.new_from_icon_name("user-trash-symbolic")
         remove_button.add_css_class("destructive-action")
         remove_button.add_css_class("flat")
-        remove_button.set_tooltip_text("Remove entry")
-        remove_button.connect("clicked", lambda _btn: self._remove_dns_entry(expander_row))
+        remove_button.set_tooltip_text("Remove variant")
+        remove_button.connect("clicked", lambda _btn: self._remove_dns_entry(variant_row))
 
         endpoint_row = Adw.ActionRow(
             title="Endpoint",
-            subtitle=target,
+            subtitle=entry.target,
             activatable=False,
             selectable=False,
         )
         transport_row = Adw.ActionRow(
             title="Transport",
-            subtitle=transport,
+            subtitle=entry.transport,
             activatable=False,
             selectable=False,
         )
-        expander_row.add_row(endpoint_row)
-        expander_row.add_row(transport_row)
-
-        if regions:
-            region_row = Adw.ActionRow(
-                title="Origin",
-                subtitle=format_region_summary(regions),
-                activatable=False,
-                selectable=False,
-            )
-            expander_row.add_row(region_row)
+        variant_row.add_row(endpoint_row)
+        variant_row.add_row(transport_row)
 
         detail_value = None
-        if transport == "DoT" and server_name and server_name != target:
-            detail_value = server_name
-        if transport == "DoH":
-            detail_value = doh_method
+        if entry.transport == "DoT" and entry.tls_hostname and entry.tls_hostname != entry.target:
+            detail_value = entry.tls_hostname
+        if entry.transport == "DoH":
+            detail_value = entry.doh_method
         if detail_value:
             detail_row = Adw.ActionRow(
-                title=self._transport_detail_title(transport),
+                title=self._transport_detail_title(entry.transport),
                 subtitle=detail_value,
                 activatable=False,
                 selectable=False,
             )
-            expander_row.add_row(detail_row)
+            variant_row.add_row(detail_row)
 
         result_row = Adw.ActionRow(
             title="Results pending",
@@ -538,14 +573,14 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             selectable=False,
         )
 
-        expander_row.result_row = result_row
-        expander_row.metrics_row = metrics_row
-        expander_row.transport_metrics_row = transport_metrics_row
+        variant_row.result_row = result_row
+        variant_row.metrics_row = metrics_row
+        variant_row.transport_metrics_row = transport_metrics_row
 
         test_button = Gtk.Button.new_from_icon_name("media-playback-start-symbolic")
         test_button.add_css_class("flat")
-        test_button.set_tooltip_text("Test this DNS")
-        test_button.connect("clicked", self._run_test_async, expander_row)
+        test_button.set_tooltip_text("Test this transport")
+        test_button.connect("clicked", self._run_test_async, variant_row)
         result_row.add_suffix(test_button)
 
         copy_button = Gtk.Button.new_from_icon_name("edit-copy-symbolic")
@@ -555,7 +590,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
 
         def copy_json(_button: Gtk.Button) -> None:
             """Copy the latest structured result so runs can be exported elsewhere."""
-            latest_result_json = getattr(expander_row, "latest_result_json", None)
+            latest_result_json = getattr(variant_row, "latest_result_json", None)
             if latest_result_json:
                 # GTK4 clipboard APIs consume typed values instead of the GTK3-style set_text helper.
                 clipboard_value = GObject.Value()
@@ -565,20 +600,80 @@ class DnsTesterWindow(Adw.ApplicationWindow):
 
         copy_button.connect("clicked", copy_json)
         transport_metrics_row.add_suffix(copy_button)
-        expander_row.copy_button = copy_button
+        variant_row.copy_button = copy_button
 
-        expander_row.add_row(result_row)
-        expander_row.add_row(metrics_row)
-        expander_row.add_row(transport_metrics_row)
-        expander_row.add_suffix(remove_button)
-        self.list_box.append(expander_row)
+        variant_row.add_row(result_row)
+        variant_row.add_row(metrics_row)
+        variant_row.add_row(transport_metrics_row)
+        variant_row.add_suffix(remove_button)
+        return variant_row
+
+    def _add_group_row(self, group: DnsProfileGroup) -> None:
+        """Create one top-level card per provider/profile pair."""
+        group_row = Adw.ExpanderRow(
+            title=group_display_name(group),
+            subtitle=self._group_subtitle(group),
+            activatable=False,
+            selectable=False,
+        )
+        group_row.dns_provider_name = group.provider_name
+        group_row.dns_profile_name = group.profile_name
+        group_row.dns_variant_rows = []
+
+        profile_row = Adw.ActionRow(
+            title="Profile",
+            subtitle=group.profile_name,
+            activatable=False,
+            selectable=False,
+        )
+        transports_row = Adw.ActionRow(
+            title="Available Transports",
+            subtitle=group_transport_summary(group),
+            activatable=False,
+            selectable=False,
+        )
+        group_row.add_row(profile_row)
+        group_row.add_row(transports_row)
+
+        if group.regions:
+            region_row = Adw.ActionRow(
+                title="Origin",
+                subtitle=format_region_summary(group.regions),
+                activatable=False,
+                selectable=False,
+            )
+            group_row.add_row(region_row)
+
+        profile_result_row = Adw.ActionRow(
+            title="Profile Results",
+            subtitle="Test all variants to compare transports inside this profile",
+            activatable=False,
+            selectable=False,
+        )
+        group_test_button = Gtk.Button.new_from_icon_name("media-playback-start-symbolic")
+        group_test_button.add_css_class("flat")
+        group_test_button.set_tooltip_text("Test this profile")
+        group_test_button.connect("clicked", lambda _button: self._run_group_tests(group_row))
+        group_row.add_suffix(group_test_button)
+        group_row.profile_result_row = profile_result_row
+        group_row.add_row(profile_result_row)
+
+        for entry in group.entries:
+            variant_row = self._build_variant_row(group_row, entry)
+            group_row.dns_variant_rows.append(variant_row)
+            group_row.add_row(variant_row)
+            self.variant_rows.append(variant_row)
+
+        self.group_rows.append(group_row)
+        self.list_box.append(group_row)
+        self._update_group_summary(group_row)
 
     def _show_add_dialog(self) -> None:
         """Show an Adwaita dialog asking for resolver settings, then append a row on confirm."""
         dialog = Adw.Dialog.new()
         dialog.set_title("Add DNS Entry")
-        dialog.set_content_width(380)
-        dialog.set_content_height(380)
+        dialog.set_content_width(420)
+        dialog.set_content_height(460)
         dialog.set_can_close(True)
 
         content_box = Gtk.Box(
@@ -589,7 +684,9 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             margin_start=12,
             margin_end=12,
         )
-        name_row = Adw.EntryRow(title="Name")
+        provider_row = Adw.EntryRow(title="Provider")
+        profile_row = Adw.EntryRow(title="Profile")
+        profile_row.set_text("Default")
         target_row = Adw.EntryRow(title="IP Address, Hostname, or HTTPS URL")
 
         transport_model = Gtk.StringList()
@@ -620,7 +717,8 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         doh_method_row.add_suffix(doh_method_dropdown)
         doh_method_row.set_visible(False)
 
-        content_box.append(name_row)
+        content_box.append(provider_row)
+        content_box.append(profile_row)
         content_box.append(target_row)
         content_box.append(transport_action_row)
         content_box.append(tls_row)
@@ -669,15 +767,21 @@ class DnsTesterWindow(Adw.ApplicationWindow):
 
         def confirm_dialog(_button: Gtk.Button | None = None) -> None:
             """Validate the row settings and add the resolver when they are coherent."""
-            name = name_row.get_text().strip()
+            provider_name = provider_row.get_text().strip()
+            profile_name = profile_row.get_text().strip() or "Default"
             target = target_row.get_text().strip()
             transport = TRANSPORTS[transport_dropdown.get_selected()]
             tls_hostname = tls_row.get_text().strip() or None
             doh_method = DOH_METHODS[doh_method_dropdown.get_selected()]
 
+            provider_row.remove_css_class("error")
+            profile_row.remove_css_class("error")
             target_row.remove_css_class("error")
             tls_row.remove_css_class("error")
 
+            if not provider_name:
+                provider_row.add_css_class("error")
+                return
             if transport in ("Do53", "DoT") and not (self._is_ip_address(target) or self._is_hostname(target)):
                 target_row.add_css_class("error")
                 return
@@ -688,10 +792,11 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                 tls_row.add_css_class("error")
                 return
 
-            if name and target:
+            if provider_name and profile_name and target:
                 try:
                     entry = self.dns_store.add_custom_entry(
-                        name,
+                        provider_name,
+                        profile_name,
                         [],
                         target,
                         transport,
@@ -702,23 +807,16 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                     self._show_error_dialog("Could not save DNS changes", str(error))
                     return
 
-                self._add_row(
-                    entry.id,
-                    entry.name,
-                    entry.regions,
-                    entry.target,
-                    entry.transport,
-                    entry.tls_hostname,
-                    entry.doh_method,
-                    entry.is_default,
-                )
+                del entry
+                self._reload_dns_rows()
                 dialog.close()
 
         cancel_btn.connect("clicked", close_dialog)
         add_btn.connect("clicked", confirm_dialog)
         transport_dropdown.connect("notify::selected", update_transport_ui)
         target_row.connect("notify::text", maybe_autoselect_transport)
-        name_row.connect("activate", confirm_dialog)
+        provider_row.connect("activate", confirm_dialog)
+        profile_row.connect("activate", confirm_dialog)
         target_row.connect("activate", confirm_dialog)
         dialog.set_default_widget(add_btn)
         update_transport_ui()
@@ -732,12 +830,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
     @Gtk.Template.Callback()
     def on_check_button_clicked(self, _button: Gtk.Button) -> None:
         """Run all resolver benchmarks with the shared benchmark settings."""
-        rows: list[Adw.ExpanderRow] = []
-        row = self.list_box.get_first_child()
-        while row is not None:
-            if isinstance(row, Adw.ExpanderRow):
-                rows.append(row)
-            row = row.get_next_sibling()
+        rows = list(self.variant_rows)
         if not rows:
             return
 
@@ -760,6 +853,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         metrics_row = getattr(expander_row, "metrics_row")
         transport_metrics_row = getattr(expander_row, "transport_metrics_row")
         copy_button = getattr(expander_row, "copy_button")
+        group_row = getattr(expander_row, "dns_group_row", None)
         endpoint = self._benchmark_endpoint(expander_row)
         options = self._benchmark_options()
 
@@ -811,6 +905,23 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             def update_ui() -> bool:
                 """Publish the final benchmark result after the worker thread finishes."""
                 if result is None:
+                    failure_result = BenchmarkResult(
+                        protocol=endpoint.transport,
+                        endpoint=endpoint.target,
+                        target=endpoint.target,
+                        cache_mode=options.cache_mode,
+                        warmup_queries=options.warmup_queries,
+                        concurrency=options.concurrency,
+                        first_query_latency_ms=None,
+                        average_latency_ms=None,
+                        p95_latency_ms=None,
+                        success_rate=0.0,
+                        successful_queries=0,
+                        total_queries=len(TOP_ES_WEBS),
+                        resolved_target=endpoint.bootstrap_address,
+                        error=error_text,
+                    )
+                    expander_row.latest_benchmark_result = failure_result
                     expander_row.latest_result_json = None
                     result_row.set_title("Result")
                     result_row.set_subtitle(error_text)
@@ -819,26 +930,13 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                     transport_metrics_row.set_title("Transport Metrics")
                     transport_metrics_row.set_subtitle("No transport details collected")
                     copy_button.set_sensitive(False)
+                    if group_row is not None:
+                        self._update_group_summary(group_row)
                     if batch_id is not None and batch_id == self.check_all_batch_id:
                         self.check_all_results.append(
                             (
-                                expander_row.get_title(),
-                                BenchmarkResult(
-                                    protocol=endpoint.transport,
-                                    endpoint=endpoint.target,
-                                    target=endpoint.target,
-                                    cache_mode=options.cache_mode,
-                                    warmup_queries=options.warmup_queries,
-                                    concurrency=options.concurrency,
-                                    first_query_latency_ms=None,
-                                    average_latency_ms=None,
-                                    p95_latency_ms=None,
-                                    success_rate=0.0,
-                                    successful_queries=0,
-                                    total_queries=len(TOP_ES_WEBS),
-                                    resolved_target=endpoint.bootstrap_address,
-                                    error=error_text,
-                                ),
+                                getattr(expander_row, "dns_display_name", expander_row.get_title()),
+                                failure_result,
                             )
                         )
                         self.check_all_pending -= 1
@@ -847,6 +945,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                     return False
 
                 expander_row.dns_resolved_target = result.resolved_target
+                expander_row.latest_benchmark_result = result
                 expander_row.latest_result_json = result.to_json()
                 result_row.set_title("Result")
                 result_row.set_subtitle(result.summary_line())
@@ -856,6 +955,8 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                 transport_metrics_row.set_subtitle(self._transport_detail_line(result))
                 copy_button.set_sensitive(True)
                 result_row.add_css_class("property")
+                if group_row is not None:
+                    self._update_group_summary(group_row)
                 expander_row.queue_draw()
                 self.list_box.queue_draw()
                 if not self._printed_console_header:
@@ -864,7 +965,9 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                     self._printed_console_header = True
                 print(result.table_row(), flush=True)
                 if batch_id is not None and batch_id == self.check_all_batch_id:
-                    self.check_all_results.append((expander_row.get_title(), result))
+                    self.check_all_results.append(
+                        (getattr(expander_row, "dns_display_name", expander_row.get_title()), result)
+                    )
                     self.check_all_pending -= 1
                     if self.check_all_pending == 0:
                         self._finish_check_all_batch(batch_id)

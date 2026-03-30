@@ -12,7 +12,8 @@ class DefaultDnsEntry(TypedDict):
     """Structure used by the bundled DNS catalog."""
 
     id: str
-    name: str
+    provider_name: str
+    profile_name: str
     regions: list[str]
     target: str
     transport: str
@@ -24,7 +25,8 @@ class DefaultDnsEntry(TypedDict):
 DEFAULT_DNS: list[DefaultDnsEntry] = [
     {
         "id": "cloudflare-do53",
-        "name": "Cloudflare (Do53)",
+        "provider_name": "Cloudflare",
+        "profile_name": "Default",
         "regions": ["US"],
         "target": "1.1.1.1",
         "transport": "Do53",
@@ -33,7 +35,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "cloudflare-dot",
-        "name": "Cloudflare (DoT)",
+        "provider_name": "Cloudflare",
+        "profile_name": "Default",
         "regions": ["US"],
         "target": "one.one.one.one",
         "transport": "DoT",
@@ -42,7 +45,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "cloudflare-doh",
-        "name": "Cloudflare (DoH)",
+        "provider_name": "Cloudflare",
+        "profile_name": "Default",
         "regions": ["US"],
         "target": "https://cloudflare-dns.com/dns-query",
         "transport": "DoH",
@@ -51,7 +55,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "dns4eu-noads-do53",
-        "name": "DNS4EU (Protective + Ad Blocking, Do53)",
+        "provider_name": "DNS4EU",
+        "profile_name": "Protective + Ad Blocking",
         "regions": ["EU", "CZ"],
         "target": "86.54.11.13",
         "transport": "Do53",
@@ -60,7 +65,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "dns4eu-noads-dot",
-        "name": "DNS4EU (Protective + Ad Blocking, DoT)",
+        "provider_name": "DNS4EU",
+        "profile_name": "Protective + Ad Blocking",
         "regions": ["EU", "CZ"],
         "target": "noads.joindns4.eu",
         "transport": "DoT",
@@ -69,7 +75,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "dns4eu-noads-doh",
-        "name": "DNS4EU (Protective + Ad Blocking, DoH)",
+        "provider_name": "DNS4EU",
+        "profile_name": "Protective + Ad Blocking",
         "regions": ["EU", "CZ"],
         "target": "https://noads.joindns4.eu/dns-query",
         "transport": "DoH",
@@ -78,7 +85,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "quad9-default",
-        "name": "Quad9 (malware blocking by default)",
+        "provider_name": "Quad9",
+        "profile_name": "Malware Blocking",
         "regions": ["EU", "CH"],
         "target": "9.9.9.9",
         "transport": "Do53",
@@ -87,7 +95,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "nextdns-default",
-        "name": "NextDNS",
+        "provider_name": "NextDNS",
+        "profile_name": "Default",
         "regions": ["US"],
         "target": "45.90.28.0",
         "transport": "Do53",
@@ -96,7 +105,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "adguard-filtered",
-        "name": "AdGuard (default filtering)",
+        "provider_name": "AdGuard",
+        "profile_name": "Default Filtering",
         "regions": ["EU", "CY"],
         "target": "94.140.14.14",
         "transport": "Do53",
@@ -105,7 +115,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "controld-filtered",
-        "name": "ControlD (no-ads-gambling-malware-typo)",
+        "provider_name": "ControlD",
+        "profile_name": "No Ads + Gambling + Malware + Typo",
         "regions": ["CA"],
         "target": "76.76.2.11",
         "transport": "Do53",
@@ -114,7 +125,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "mullvad-base-dot",
-        "name": "mullvad (base ads,malware)",
+        "provider_name": "Mullvad",
+        "profile_name": "Base Ads + Malware",
         "regions": ["EU", "SE"],
         "target": "194.242.2.4",
         "transport": "DoT",
@@ -123,7 +135,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "mullvad-adblock-dot",
-        "name": "mullvad (ads)",
+        "provider_name": "Mullvad",
+        "profile_name": "Ad Blocking",
         "regions": ["EU", "SE"],
         "target": "194.242.2.3",
         "transport": "DoT",
@@ -132,7 +145,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "mullvad-default-dot",
-        "name": "mullvad",
+        "provider_name": "Mullvad",
+        "profile_name": "Default",
         "regions": ["EU", "SE"],
         "target": "194.242.2.2",
         "transport": "DoT",
@@ -141,7 +155,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "gcore-default",
-        "name": "Gcore",
+        "provider_name": "Gcore",
+        "profile_name": "Default",
         "regions": ["EU", "LU"],
         "target": "95.85.95.85",
         "transport": "Do53",
@@ -150,7 +165,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "flashstart-default",
-        "name": "FlashStart",
+        "provider_name": "FlashStart",
+        "profile_name": "Default",
         "regions": ["EU", "IT"],
         "target": "185.236.104.104",
         "transport": "Do53",
@@ -159,7 +175,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "google-default",
-        "name": "Google",
+        "provider_name": "Google",
+        "profile_name": "Default",
         "regions": ["US"],
         "target": "8.8.8.8",
         "transport": "Do53",
@@ -168,7 +185,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "dns4eu-default",
-        "name": "DNS4EU",
+        "provider_name": "DNS4EU",
+        "profile_name": "Default",
         "regions": ["EU", "CZ"],
         "target": "86.54.11.100",
         "transport": "Do53",
@@ -177,7 +195,8 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
     },
     {
         "id": "adguard-default",
-        "name": "AdGuard",
+        "provider_name": "AdGuard",
+        "profile_name": "Default",
         "regions": ["EU", "CY"],
         "target": "94.140.14.140",
         "transport": "Do53",
