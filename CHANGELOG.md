@@ -23,6 +23,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Updated custom DNS entry storage to persist provider and profile metadata and keep older flat entries readable.
 - Raised the Flatpak runtime to GNOME 50 so the new libadwaita 1.9 sidebar widgets are available.
 - Integrated the sidebar and content area more cleanly and moved `Check All` to a fixed footer at the bottom of the provider sidebar.
+- Replaced the provider switcher sidebar with `AdwSidebar` so provider navigation uses the new libadwaita 1.9 sidebar API directly.
 
 ### Fixed
 - Fixed benchmark JSON export so raw DNS wire payloads no longer break serialization.

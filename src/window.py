@@ -81,9 +81,11 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         self.dns_store = DnsStateStore()
         self.provider_groups: list[DnsProviderGroup] = []
         self.provider_pages: dict[str, Gtk.Widget] = {}
+        self.provider_names: list[str] = []
         self.group_rows: list[Adw.ExpanderRow] = []
         self.variant_rows: list[Adw.ExpanderRow] = []
-        self.provider_sidebar.set_stack(self.provider_stack)
+        # Keep the visible provider page aligned with the current sidebar selection.
+        self.provider_sidebar.connect("notify::selected", self._on_provider_sidebar_selected)
         self._reload_dns_rows()
 
     def _reload_dns_rows(self) -> None:
@@ -94,8 +96,12 @@ class DnsTesterWindow(Adw.ApplicationWindow):
 
         self.provider_groups = group_dns_providers(self.dns_store.load_entries(DEFAULT_DNS))
         self.provider_pages = {}
+        self.provider_names = []
         self.group_rows = []
         self.variant_rows = []
+        self.provider_sidebar.remove_all()
+
+        provider_section = Adw.SidebarSection()
 
         for provider_group in self.provider_groups:
             provider_panel = self._build_provider_panel(provider_group)
@@ -108,17 +114,38 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             )
             provider_page.set_child(provider_panel)
             self.provider_pages[provider_group.provider_name] = provider_page
+            self.provider_names.append(provider_group.provider_name)
             self.provider_stack.add_titled(
                 provider_page,
                 provider_group.provider_name,
                 provider_display_name(provider_group),
             )
+            provider_item = Adw.SidebarItem.new(provider_display_name(provider_group))
+            provider_item.set_subtitle(self._provider_summary_line(provider_group))
+            provider_item.set_tooltip(provider_group.provider_name)
+            provider_section.append(provider_item)
+
+        if self.provider_names:
+            self.provider_sidebar.append(provider_section)
 
         target_provider_name = previous_provider_name
         if target_provider_name not in self.provider_pages and self.provider_groups:
             target_provider_name = self.provider_groups[0].provider_name
         if target_provider_name is not None:
+            target_index = self.provider_names.index(target_provider_name)
+            self.provider_sidebar.set_selected(target_index)
             self.provider_stack.set_visible_child_name(target_provider_name)
+
+    def _on_provider_sidebar_selected(
+        self,
+        _sidebar: Adw.Sidebar,
+        _param_spec: GObject.ParamSpec,
+    ) -> None:
+        """Mirror the selected provider item into the detail stack."""
+        selected_index = self.provider_sidebar.get_selected()
+        if selected_index < 0 or selected_index >= len(self.provider_names):
+            return
+        self.provider_stack.set_visible_child_name(self.provider_names[selected_index])
 
     def _reset_default_entries(self) -> None:
         """Restore bundled DNS entries that were previously hidden."""
