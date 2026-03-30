@@ -37,7 +37,7 @@
                     </child>
                     <child type="start">
                       <object class="GtkButton" id="check_button">
-                        <property name="icon-name">system-run-symbolic</property>
+                        <property name="icon-name">media-playback-start-symbolic</property>
                         <property name="tooltip-text" translatable="yes">Benchmark all listed DNS transports</property>
                         <signal name="clicked" handler="on_check_button_clicked"/>
                       </object>

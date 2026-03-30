@@ -31,6 +31,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Removed an extra root container from the main window layout so the split view hierarchy stays simpler and easier to maintain.
 - Reimplemented the provider browser around `AdwNavigationSplitView` and `AdwBreakpoint` so the sidebar now follows the responsive layout pattern from the libadwaita documentation.
 - Moved the bulk benchmark action into the sidebar header and switched it to a compact icon button so it stays close to provider navigation.
+- Updated the bulk benchmark icon to a clearer play-style symbol so the action reads more like “run all tests”.
 
 ### Fixed
 - Fixed benchmark JSON export so raw DNS wire payloads no longer break serialization.
