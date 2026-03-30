@@ -10,6 +10,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Updated the README screenshot to the current provider-browser UI and removed the outdated image asset.
 - Added bundled provider icons to the sidebar while keeping a generic fallback icon for user-defined DNS providers.
 - Replaced the placeholder ControlD sidebar icon with the favicon published on the ControlD website.
+- Removed an unused provider icon subdirectory left behind during the sidebar icon work.
 
 ## [26.03.30.1745] - 2026-03-30
 

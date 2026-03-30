@@ -58,8 +58,8 @@
   </screenshots>
 
   <releases>
-    <release version="26.03.30.2028" date="2026-03-30">
-      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.2028</url>
+    <release version="26.03.30.2030" date="2026-03-30">
+      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.2030</url>
       <description translate="no">
         <p>This release modernizes DNS benchmarking and improves resolver management.</p>
         <ul>
@@ -83,6 +83,7 @@
           <li>Update the README screenshot to match the current provider-browser interface and remove the outdated image.</li>
           <li>Add provider-specific sidebar icons for the bundled DNS services while keeping a generic network icon for custom providers.</li>
           <li>Replace the placeholder ControlD provider icon with the favicon published by the ControlD website.</li>
+          <li>Clean up the bundled sidebar icon assets by removing an unused provider icon subdirectory.</li>
           <li>Raise the Flatpak runtime to GNOME 50 so the new sidebar widgets are available in the shipped app.</li>
           <li>Integrate the new sidebar layout more cleanly and move the Check All action into a fixed footer at the bottom of the provider list.</li>
         </ul>
