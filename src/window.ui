@@ -22,7 +22,7 @@
         <property name="sidebar-width-fraction">0.28</property>
         <property name="sidebar">
           <object class="AdwNavigationPage" id="provider_sidebar_page">
-            <property name="title" translatable="yes">Providers</property>
+            <property name="title" translatable="yes"></property>
             <property name="child">
               <object class="AdwToolbarView">
                 <child type="top">
