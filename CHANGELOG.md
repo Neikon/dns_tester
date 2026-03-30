@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 
 ## [Unreleased]
 
+## [26.03.30.1745] - 2026-03-30
+
 ### Added
 - Added fair DNS benchmarking for `Do53`, `DoT`, and `DoH` with warm-up, concurrency, structured metrics, and optional warm-cache mode.
 - Added a ranked summary dialog for `Check All` results.

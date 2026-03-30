@@ -58,8 +58,8 @@
   </screenshots>
 
   <releases>
-    <release version="26.03.30.1737" date="2026-03-30">
-      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1737</url>
+    <release version="26.03.30.1745" date="2026-03-30">
+      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1745</url>
       <description translate="no">
         <p>This release modernizes DNS benchmarking and improves resolver management.</p>
         <ul>
