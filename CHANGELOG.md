@@ -16,6 +16,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Replaced the placeholder DNS4EU, FlashStart, Gcore, and Mullvad sidebar icons with the favicons published by their websites.
 - Simplified provider icon selection so icon names are derived from the provider label instead of a repetitive manual map.
 - Replaced the placeholder Google and Cloudflare sidebar icons with the favicons published by their websites.
+- Replaced the placeholder NextDNS sidebar icon with the favicon published by its website and refreshed the AdGuard asset from the official AdGuard DNS favicon.
 
 ## [26.03.30.1745] - 2026-03-30
 
