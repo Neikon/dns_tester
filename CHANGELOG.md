@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 ## [Unreleased]
 
 ### Changed
+- Expanded the bundled Cloudflare catalog to include the Families malware-only and malware-plus-adult-content profiles across Do53, DoT, and DoH.
 - Expanded the bundled Google Public DNS catalog so the default resolver is available through Do53, DoT, and DoH.
 - Expanded the bundled DNS4EU catalog to ship all five public profiles across Do53, DoT, and DoH, and renamed the old flat default entry to the official Unfiltered profile.
 - Expanded the bundled Mullvad catalog to include all published encrypted DNS profiles across DoT and DoH, without exposing misleading Do53 entries.
