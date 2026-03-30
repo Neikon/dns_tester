@@ -18,6 +18,8 @@ description: Agent directives for the DNS_Tester project.
 - Add new changelog notes to the `Unreleased` section while work is in progress.
 - When preparing a release, move the relevant `Unreleased` entries into a dated version section, newest first.
 - Keep changelog entries concise, grouped by category, and focused on user-visible impact rather than low-level implementation detail.
+- Keep the latest `<release>` entry in `data/es.neikon.dns_tester.metainfo.xml.in` in sync with the changes since the previous release.
+- Replace placeholder release notes in the metainfo file with short, real user-facing bullets derived from the changelog or release work.
 
 ## Persistent Git Policy
 - Codex must manage Git autonomously using GitFlow whenever the repository state allows it.
