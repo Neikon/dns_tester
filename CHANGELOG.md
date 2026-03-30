@@ -12,6 +12,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Replaced the placeholder ControlD sidebar icon with the favicon published on the ControlD website.
 - Removed an unused provider icon subdirectory left behind during the sidebar icon work.
 - Moved bundled provider logo source files into a dedicated `data/provider-icons` directory so they stay separate from the app's own icons.
+- Removed the obsolete duplicate provider icon files from `data/icons` so the sidebar uses the new dedicated provider icon asset set only.
 
 ## [26.03.30.1745] - 2026-03-30
 
