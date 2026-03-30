@@ -25,6 +25,7 @@ from gi.repository import Adw
 from gi.repository import GLib
 from gi.repository import GObject
 from gi.repository import Gtk
+from gi.repository import Pango
 
 from .aux import TOP_ES_WEBS
 from .benchmark import BenchmarkResult
@@ -33,9 +34,11 @@ from .benchmark import ResolverEndpoint
 from .benchmark import run_benchmark_sync
 from .default_dns import DEFAULT_DNS
 from .dns_groups import DnsProfileGroup
-from .dns_groups import group_display_name
-from .dns_groups import group_dns_entries
+from .dns_groups import DnsProviderGroup
+from .dns_groups import group_dns_providers
 from .dns_groups import group_transport_summary
+from .dns_groups import provider_display_name
+from .dns_groups import provider_sidebar_summary
 from .dns_groups import variant_display_name
 from .dns_store import DnsEntry
 from .dns_store import DnsStateStore
@@ -53,6 +56,8 @@ class DnsTesterWindow(Adw.ApplicationWindow):
 
     # Button in the header to trigger row creation.
     add_button = Gtk.Template.Child()
+    # Sidebar listing the available providers.
+    provider_list = Gtk.Template.Child()
     # Main container from the template where we add dynamic widgets.
     content_box = Gtk.Template.Child()
     # Bottom button to run DNS latency checks.
@@ -75,37 +80,52 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         self.check_all_results: list[tuple[str, object]] = []
         # DNS state is persisted separately from the bundled catalog.
         self.dns_store = DnsStateStore()
+        self.selected_provider_name: str | None = None
+        self.provider_groups: list[DnsProviderGroup] = []
+        self.provider_panels: dict[str, Gtk.Widget] = {}
+        self.provider_rows: dict[str, Gtk.ListBoxRow] = {}
         self.group_rows: list[Adw.ExpanderRow] = []
         self.variant_rows: list[Adw.ExpanderRow] = []
-
-        # The dynamic resolver list stays below the shared controls.
-        self.list_box = Gtk.ListBox(
-            selection_mode=Gtk.SelectionMode.NONE,
-            hexpand=True,
-            vexpand=True,
-            css_classes=['boxed-list-separate'],
-            margin_top=12,
-            margin_bottom=12,
-            margin_start=12,
-            margin_end=12,
-        )
-
-        self.content_box.append(self.list_box)
+        self.provider_list.connect("row-selected", self._on_provider_row_selected)
         self._reload_dns_rows()
 
     def _reload_dns_rows(self) -> None:
-        """Rebuild the visible DNS list from persisted state."""
-        row = self.list_box.get_first_child()
-        while row is not None:
-            next_row = row.get_next_sibling()
-            self.list_box.remove(row)
-            row = next_row
+        """Rebuild the provider sidebar and content area from persisted state."""
+        previous_provider_name = self.selected_provider_name
+        provider_row = self.provider_list.get_first_child()
+        while provider_row is not None:
+            next_row = provider_row.get_next_sibling()
+            self.provider_list.remove(provider_row)
+            provider_row = next_row
 
+        content_child = self.content_box.get_first_child()
+        while content_child is not None:
+            next_child = content_child.get_next_sibling()
+            self.content_box.remove(content_child)
+            content_child = next_child
+
+        self.provider_groups = group_dns_providers(self.dns_store.load_entries(DEFAULT_DNS))
+        self.provider_panels = {}
+        self.provider_rows = {}
         self.group_rows = []
         self.variant_rows = []
+        self.selected_provider_name = None
 
-        for group in group_dns_entries(self.dns_store.load_entries(DEFAULT_DNS)):
-            self._add_group_row(group)
+        for provider_group in self.provider_groups:
+            sidebar_row = self._build_provider_sidebar_row(provider_group)
+            self.provider_rows[provider_group.provider_name] = sidebar_row
+            self.provider_list.append(sidebar_row)
+
+            provider_panel = self._build_provider_panel(provider_group)
+            provider_panel.set_visible(False)
+            self.provider_panels[provider_group.provider_name] = provider_panel
+            self.content_box.append(provider_panel)
+
+        target_provider_name = previous_provider_name
+        if target_provider_name not in self.provider_rows and self.provider_groups:
+            target_provider_name = self.provider_groups[0].provider_name
+        if target_provider_name is not None:
+            self.provider_list.select_row(self.provider_rows[target_provider_name])
 
     def _reset_default_entries(self) -> None:
         """Restore bundled DNS entries that were previously hidden."""
@@ -228,12 +248,114 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         dialog.present(self)
 
     def _group_subtitle(self, group: DnsProfileGroup) -> str:
-        """Build a compact subtitle for one provider/profile card."""
-        return f"{group.profile_name} · {group_transport_summary(group)}"
+        """Build a compact subtitle for one profile card inside a provider."""
+        return group_transport_summary(group)
 
     def _variant_subtitle(self, target: str) -> str:
         """Keep the nested transport row subtitle focused on the endpoint."""
         return target
+
+    def _provider_summary_line(self, provider_group: DnsProviderGroup) -> str:
+        """Build the compact provider metadata shown in the sidebar and detail header."""
+        return provider_sidebar_summary(provider_group)
+
+    def _build_provider_sidebar_row(self, provider_group: DnsProviderGroup) -> Gtk.ListBoxRow:
+        """Create one sidebar row that selects a provider."""
+        row = Gtk.ListBoxRow(selectable=True, activatable=True)
+        row.dns_provider_name = provider_group.provider_name
+
+        content_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=2,
+            margin_top=10,
+            margin_bottom=10,
+            margin_start=12,
+            margin_end=12,
+        )
+        title_label = Gtk.Label(
+            label=provider_display_name(provider_group),
+            xalign=0.0,
+        )
+        title_label.add_css_class("heading")
+        title_label.set_ellipsize(Pango.EllipsizeMode.END)
+        content_box.append(title_label)
+
+        subtitle_label = Gtk.Label(
+            label=self._provider_summary_line(provider_group),
+            xalign=0.0,
+        )
+        subtitle_label.add_css_class("dim-label")
+        subtitle_label.set_ellipsize(Pango.EllipsizeMode.END)
+        content_box.append(subtitle_label)
+
+        row.set_child(content_box)
+        return row
+
+    def _set_selected_provider(self, provider_name: str | None) -> None:
+        """Show the selected provider panel and hide the others."""
+        self.selected_provider_name = provider_name
+        for current_provider_name, provider_panel in self.provider_panels.items():
+            provider_panel.set_visible(current_provider_name == provider_name)
+
+    def _on_provider_row_selected(self, _list_box: Gtk.ListBox, row: Gtk.ListBoxRow | None) -> None:
+        """Update the visible provider when the sidebar selection changes."""
+        provider_name = getattr(row, "dns_provider_name", None) if row is not None else None
+        self._set_selected_provider(provider_name)
+
+    def _build_provider_panel(self, provider_group: DnsProviderGroup) -> Gtk.Box:
+        """Create the detail panel for one provider with its profiles and transports."""
+        panel_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=12,
+            hexpand=True,
+            vexpand=True,
+        )
+        panel_box.dns_provider_name = provider_group.provider_name
+
+        header_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=4,
+            margin_top=6,
+            margin_bottom=6,
+        )
+        title_label = Gtk.Label(
+            label=provider_display_name(provider_group),
+            xalign=0.0,
+        )
+        title_label.add_css_class("title-2")
+        header_box.append(title_label)
+
+        summary_label = Gtk.Label(
+            label=self._provider_summary_line(provider_group),
+            xalign=0.0,
+        )
+        summary_label.add_css_class("dim-label")
+        header_box.append(summary_label)
+
+        if provider_group.regions:
+            origin_label = Gtk.Label(
+                label=format_region_summary(provider_group.regions),
+                xalign=0.0,
+                wrap=True,
+            )
+            origin_label.add_css_class("caption")
+            origin_label.add_css_class("dim-label")
+            header_box.append(origin_label)
+
+        panel_box.append(header_box)
+
+        profiles_list_box = Gtk.ListBox(
+            selection_mode=Gtk.SelectionMode.NONE,
+            hexpand=True,
+            vexpand=True,
+            css_classes=["boxed-list-separate"],
+        )
+        panel_box.append(profiles_list_box)
+
+        for profile_group in provider_group.profiles:
+            self._add_group_row(profile_group, profiles_list_box)
+
+        return panel_box
 
     def _variant_rows_for_group(self, group_row: Adw.ExpanderRow) -> list[Adw.ExpanderRow]:
         """Return the transport rows currently attached to one provider/profile card."""
@@ -608,10 +730,10 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         variant_row.add_suffix(remove_button)
         return variant_row
 
-    def _add_group_row(self, group: DnsProfileGroup) -> None:
-        """Create one top-level card per provider/profile pair."""
+    def _add_group_row(self, group: DnsProfileGroup, parent_list_box: Gtk.ListBox) -> None:
+        """Create one profile card inside the selected provider panel."""
         group_row = Adw.ExpanderRow(
-            title=group_display_name(group),
+            title=group.profile_name,
             subtitle=self._group_subtitle(group),
             activatable=False,
             selectable=False,
@@ -665,7 +787,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             self.variant_rows.append(variant_row)
 
         self.group_rows.append(group_row)
-        self.list_box.append(group_row)
+        parent_list_box.append(group_row)
         self._update_group_summary(group_row)
 
     def _show_add_dialog(self) -> None:
@@ -865,7 +987,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         transport_metrics_row.set_subtitle("Waiting for results...")
         copy_button.set_sensitive(False)
         expander_row.set_expanded(True)
-        self.list_box.queue_draw()
+        self.content_box.queue_draw()
 
         def worker() -> None:
             def update_progress(phase: str, current: int, total: int, detail: str) -> bool:
@@ -958,7 +1080,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                 if group_row is not None:
                     self._update_group_summary(group_row)
                 expander_row.queue_draw()
-                self.list_box.queue_draw()
+                self.content_box.queue_draw()
                 if not self._printed_console_header:
                     print("[DNS benchmark]", flush=False)
                     print(result.table_header(), flush=False)

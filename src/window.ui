@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <requires lib="gtk" version="4.0"/>
-  <requires lib="Adw" version="1.0"/>
+  <requires lib="Adw" version="1.9"/>
   <template class="DnsTesterWindow" parent="AdwApplicationWindow">
     <property name="title" translatable="yes">DNS Tester</property>
-    <property name="default-width">500</property>
-    <property name="default-height">720</property>
+    <property name="default-width">860</property>
+    <property name="default-height">760</property>
     <property name="content">
       <object class="AdwToolbarView">
         <child type="top">
@@ -40,22 +40,53 @@
             <property name="margin-top">12</property>
             <property name="margin-bottom">12</property>
             <child>
-              <!-- Scrollable container so the dynamic list does not overflow the view. -->
-              <object class="GtkScrolledWindow">
+              <object class="AdwNavigationSplitView">
                 <property name="hexpand">True</property>
                 <property name="vexpand">True</property>
-                <property name="min-content-height">200</property>
-                <property name="propagate-natural-height">True</property>
-                <property name="propagate-natural-width">True</property>
-                <child>
-                  <!-- Empty container for dynamic content built in Python. -->
-                  <object class="GtkBox" id="content_box">
-                    <property name="orientation">vertical</property>
-                    <property name="spacing">0</property>
+                <property name="min-sidebar-width">220</property>
+                <property name="max-sidebar-width">300</property>
+                <property name="sidebar-width-fraction">0.28</property>
+                <property name="show-content">True</property>
+                <property name="sidebar">
+                  <object class="GtkScrolledWindow">
                     <property name="hexpand">True</property>
                     <property name="vexpand">True</property>
+                    <child>
+                      <object class="GtkListBox" id="provider_list">
+                        <property name="selection-mode">single</property>
+                        <property name="margin-start">6</property>
+                        <property name="margin-end">6</property>
+                        <property name="margin-top">6</property>
+                        <property name="margin-bottom">6</property>
+                        <style>
+                          <class name="navigation-sidebar"/>
+                        </style>
+                      </object>
+                    </child>
                   </object>
-                </child>
+                </property>
+                <property name="content">
+                  <object class="GtkScrolledWindow">
+                    <property name="hexpand">True</property>
+                    <property name="vexpand">True</property>
+                    <property name="min-content-height">200</property>
+                    <property name="propagate-natural-height">True</property>
+                    <property name="propagate-natural-width">True</property>
+                    <child>
+                      <!-- Empty container for dynamic content built in Python. -->
+                      <object class="GtkBox" id="content_box">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">12</property>
+                        <property name="hexpand">True</property>
+                        <property name="vexpand">True</property>
+                        <property name="margin-start">12</property>
+                        <property name="margin-end">12</property>
+                        <property name="margin-top">12</property>
+                        <property name="margin-bottom">12</property>
+                      </object>
+                    </child>
+                  </object>
+                </property>
               </object>
             </child>
             <child>

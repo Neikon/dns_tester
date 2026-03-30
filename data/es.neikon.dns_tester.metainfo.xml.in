@@ -58,8 +58,8 @@
   </screenshots>
 
   <releases>
-    <release version="26.03.30.1159" date="2026-03-30">
-      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1159</url>
+    <release version="26.03.30.1226" date="2026-03-30">
+      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1226</url>
       <description translate="no">
         <p>This release modernizes DNS benchmarking and improves resolver management.</p>
         <ul>
@@ -69,7 +69,7 @@
           <li>Fix benchmark JSON copy so exporting results works correctly on GTK4 and Wayland sessions.</li>
           <li>Ignore the local Codex marker file so repository status stays focused on project changes.</li>
           <li>Clarify the Git workflow so finished local commits are pushed automatically after integration work.</li>
-          <li>Group DNS variants by provider and profile so Do53, DoT, and DoH endpoints can be compared inside one shared card.</li>
+          <li>Rework DNS browsing into a provider sidebar so each provider reveals its profiles and each profile expands into transport variants.</li>
         </ul>
       </description>
     </release>

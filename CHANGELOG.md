@@ -19,7 +19,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Updated the About dialog to read the latest release notes from the AppStream metainfo file.
 - Ignored the local `.codex` workspace marker so it no longer shows up in repository status.
 - Documented that completed Git work must be pushed automatically so branches do not remain local-only by accident.
-- Grouped DNS rows by provider and profile so transport variants now live inside one shared card instead of repeating the provider in the main list.
+- Reworked DNS browsing into a provider sidebar so each provider now reveals its profiles, and each profile expands into its transport variants.
 - Updated custom DNS entry storage to persist provider and profile metadata and keep older flat entries readable.
 
 ### Fixed

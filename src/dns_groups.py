@@ -29,6 +29,15 @@ class DnsProfileGroup:
     entries: list[DnsEntry] = field(default_factory=list)
 
 
+@dataclass
+class DnsProviderGroup:
+    """Collection of profiles that belong to one provider."""
+
+    provider_name: str
+    regions: list[str]
+    profiles: list[DnsProfileGroup] = field(default_factory=list)
+
+
 def _merge_regions(existing_regions: list[str], new_regions: list[str]) -> list[str]:
     """Merge region labels while preserving the first-seen order."""
     merged_regions = list(existing_regions)
@@ -62,6 +71,43 @@ def group_dns_entries(entries: list[DnsEntry]) -> list[DnsProfileGroup]:
         group.entries.sort(key=lambda entry: TRANSPORT_ORDER.get(entry.transport, 99))
 
     return ordered_groups
+
+
+def group_dns_providers(entries: list[DnsEntry]) -> list[DnsProviderGroup]:
+    """Group DNS entries first by provider and then by profile."""
+    provider_map: dict[str, DnsProviderGroup] = {}
+    ordered_providers: list[DnsProviderGroup] = []
+
+    for profile_group in group_dns_entries(entries):
+        provider_group = provider_map.get(profile_group.provider_name)
+        if provider_group is None:
+            provider_group = DnsProviderGroup(
+                provider_name=profile_group.provider_name,
+                regions=list(profile_group.regions),
+            )
+            provider_map[profile_group.provider_name] = provider_group
+            ordered_providers.append(provider_group)
+        else:
+            provider_group.regions = _merge_regions(provider_group.regions, profile_group.regions)
+        provider_group.profiles.append(profile_group)
+
+    return ordered_providers
+
+
+def provider_display_name(group: DnsProviderGroup) -> str:
+    """Build the top-level provider title decorated with region flags."""
+    return decorate_name_with_regions(group.provider_name, group.regions)
+
+
+def provider_sidebar_summary(group: DnsProviderGroup) -> str:
+    """Render sidebar metadata for one provider."""
+    available_transports: list[str] = []
+    for profile_group in group.profiles:
+        for entry in profile_group.entries:
+            if entry.transport not in available_transports:
+                available_transports.append(entry.transport)
+    profile_label = "profile" if len(group.profiles) == 1 else "profiles"
+    return f"{len(group.profiles)} {profile_label} · {' · '.join(available_transports)}"
 
 
 def group_display_name(group: DnsProfileGroup) -> str:
