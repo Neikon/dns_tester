@@ -1,0 +1,23 @@
+# Bundled provider logos live outside the app icon directory in the source tree,
+# but are still installed into the icon theme so AdwSidebar can load them by name.
+
+provider_scalable_icons = files(
+  'scalable/es.neikon.dns_tester-provider-adguard.svg',
+  'scalable/es.neikon.dns_tester-provider-cloudflare.svg',
+  'scalable/es.neikon.dns_tester-provider-dns4eu.svg',
+  'scalable/es.neikon.dns_tester-provider-flashstart.svg',
+  'scalable/es.neikon.dns_tester-provider-gcore.svg',
+  'scalable/es.neikon.dns_tester-provider-google.svg',
+  'scalable/es.neikon.dns_tester-provider-mullvad.svg',
+  'scalable/es.neikon.dns_tester-provider-nextdns.svg',
+  'scalable/es.neikon.dns_tester-provider-quad9.svg',
+)
+install_data(
+  provider_scalable_icons,
+  install_dir: get_option('datadir') / 'icons' / 'hicolor' / 'scalable' / 'apps'
+)
+
+install_data(
+  '128x128/es.neikon.dns_tester-provider-controld.png',
+  install_dir: get_option('datadir') / 'icons' / 'hicolor' / '128x128' / 'apps'
+)
