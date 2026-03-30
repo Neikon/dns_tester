@@ -19,6 +19,15 @@
               </object>
             </child>
             <child type="end">
+              <object class="GtkButton" id="check_button">
+                <property name="label" translatable="yes">Check All</property>
+                <style>
+                  <class name="suggested-action"/>
+                </style>
+                <signal name="clicked" handler="on_check_button_clicked"/>
+              </object>
+            </child>
+            <child type="end">
               <object class="GtkMenuButton">
                 <property name="primary">True</property>
                 <property name="icon-name">open-menu-symbolic</property>
@@ -44,41 +53,15 @@
                 <property name="sidebar-width-fraction">0.28</property>
                 <property name="pin-sidebar">True</property>
                 <child type="sidebar">
-                  <object class="AdwToolbarView">
-                    <property name="bottom-bar-style">raised</property>
-                    <property name="content">
-                      <object class="GtkScrolledWindow">
-                        <property name="hexpand">True</property>
-                        <property name="vexpand">True</property>
-                        <property name="margin-start">12</property>
-                        <property name="margin-end">12</property>
-                        <property name="margin-top">12</property>
-                        <property name="margin-bottom">12</property>
-                        <child>
-                          <object class="AdwSidebar" id="provider_sidebar"/>
-                        </child>
-                      </object>
-                    </property>
-                    <child type="bottom">
-                      <object class="GtkBox">
-                        <property name="orientation">vertical</property>
-                        <property name="margin-start">12</property>
-                        <property name="margin-end">12</property>
-                        <property name="margin-top">12</property>
-                        <property name="margin-bottom">12</property>
-                        <child>
-                          <object class="GtkButton" id="check_button">
-                            <property name="label" translatable="yes">Check All</property>
-                            <property name="hexpand">True</property>
-                            <property name="halign">fill</property>
-                            <property name="height-request">48</property>
-                            <style>
-                              <class name="suggested-action"/>
-                            </style>
-                            <signal name="clicked" handler="on_check_button_clicked"/>
-                          </object>
-                        </child>
-                      </object>
+                  <object class="GtkScrolledWindow">
+                    <property name="hexpand">True</property>
+                    <property name="vexpand">True</property>
+                    <property name="margin-start">12</property>
+                    <property name="margin-end">12</property>
+                    <property name="margin-top">12</property>
+                    <property name="margin-bottom">12</property>
+                    <child>
+                      <object class="AdwSidebar" id="provider_sidebar"/>
                     </child>
                   </object>
                 </child>
