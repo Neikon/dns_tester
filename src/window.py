@@ -41,6 +41,7 @@ from .dns_groups import provider_sidebar_summary
 from .dns_groups import variant_display_name
 from .dns_store import DnsEntry
 from .dns_store import DnsStateStore
+from .provider_icons import get_provider_icon_name
 from .region_info import format_region_summary
 
 # Supported resolver transports exposed in the add-entry dialog.
@@ -129,6 +130,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                 provider_group.provider_name,
             )
             provider_item = Adw.SidebarItem.new(provider_group.provider_name)
+            provider_item.set_icon_name(get_provider_icon_name(provider_group.provider_name))
             provider_item.set_subtitle(self._provider_summary_line(provider_group))
             provider_item.set_tooltip(provider_group.provider_name)
             # Providers that include user-defined profiles belong to the custom section.

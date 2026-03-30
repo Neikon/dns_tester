@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 
 ### Changed
 - Updated the README screenshot to the current provider-browser UI and removed the outdated image asset.
+- Added bundled provider icons to the sidebar while keeping a generic fallback icon for user-defined DNS providers.
 
 ## [26.03.30.1745] - 2026-03-30
 
