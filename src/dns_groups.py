@@ -38,6 +38,11 @@ class DnsProviderGroup:
     profiles: list[DnsProfileGroup] = field(default_factory=list)
 
 
+def provider_has_custom_entries(group: DnsProviderGroup) -> bool:
+    """Return whether a provider contains at least one user-defined entry."""
+    return any(not entry.is_default for profile in group.profiles for entry in profile.entries)
+
+
 def _merge_regions(existing_regions: list[str], new_regions: list[str]) -> list[str]:
     """Merge region labels while preserving the first-seen order."""
     merged_regions = list(existing_regions)

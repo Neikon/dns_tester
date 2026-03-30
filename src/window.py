@@ -37,6 +37,7 @@ from .dns_groups import DnsProviderGroup
 from .dns_groups import group_dns_providers
 from .dns_groups import group_transport_summary
 from .dns_groups import provider_display_name
+from .dns_groups import provider_has_custom_entries
 from .dns_groups import provider_sidebar_summary
 from .dns_groups import variant_display_name
 from .dns_store import DnsEntry
@@ -100,8 +101,12 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         self.group_rows = []
         self.variant_rows = []
         self.provider_sidebar.remove_all()
-
-        provider_section = Adw.SidebarSection()
+        bundled_section = Adw.SidebarSection()
+        bundled_section.set_title("Bundled")
+        custom_section = Adw.SidebarSection()
+        custom_section.set_title("Custom")
+        bundled_provider_names: list[str] = []
+        custom_provider_names: list[str] = []
 
         for provider_group in self.provider_groups:
             provider_panel = self._build_provider_panel(provider_group)
@@ -114,7 +119,6 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             )
             provider_page.set_child(provider_panel)
             self.provider_pages[provider_group.provider_name] = provider_page
-            self.provider_names.append(provider_group.provider_name)
             self.provider_stack.add_titled(
                 provider_page,
                 provider_group.provider_name,
@@ -123,10 +127,20 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             provider_item = Adw.SidebarItem.new(provider_display_name(provider_group))
             provider_item.set_subtitle(self._provider_summary_line(provider_group))
             provider_item.set_tooltip(provider_group.provider_name)
-            provider_section.append(provider_item)
+            # Providers that include user-defined profiles belong to the custom section.
+            if provider_has_custom_entries(provider_group):
+                target_section = custom_section
+                custom_provider_names.append(provider_group.provider_name)
+            else:
+                target_section = bundled_section
+                bundled_provider_names.append(provider_group.provider_name)
+            target_section.append(provider_item)
 
-        if self.provider_names:
-            self.provider_sidebar.append(provider_section)
+        if bundled_section.get_items().get_n_items() > 0:
+            self.provider_sidebar.append(bundled_section)
+        if custom_section.get_items().get_n_items() > 0:
+            self.provider_sidebar.append(custom_section)
+        self.provider_names = bundled_provider_names + custom_provider_names
 
         target_provider_name = previous_provider_name
         if target_provider_name not in self.provider_pages and self.provider_groups:
