@@ -56,11 +56,15 @@ class DnsTesterWindow(Adw.ApplicationWindow):
 
     # Button in the header to trigger row creation.
     add_button = Gtk.Template.Child()
+    # Adaptive split view hosting the navigation sidebar and the provider content page.
+    split_view = Gtk.Template.Child()
     # New 1.9 sidebar widget that switches between provider pages.
     provider_sidebar = Gtk.Template.Child()
+    # Navigation page backing the provider detail area in collapsed mode.
+    provider_content_page = Gtk.Template.Child()
     # View stack holding one provider page per DNS backend.
     provider_stack = Gtk.Template.Child()
-    # Bottom button to run DNS latency checks.
+    # Header-bar button to run DNS latency checks.
     check_button = Gtk.Template.Child()
 
     def __init__(self, **kwargs):
@@ -150,6 +154,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             target_index = self.provider_names.index(target_provider_name)
             self.provider_sidebar.set_selected(target_index)
             self.provider_stack.set_visible_child_name(target_provider_name)
+            self._sync_provider_content_title(target_provider_name)
 
     def _on_provider_sidebar_selected(
         self,
@@ -160,7 +165,22 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         selected_index = self.provider_sidebar.get_selected()
         if selected_index < 0 or selected_index >= len(self.provider_names):
             return
-        self.provider_stack.set_visible_child_name(self.provider_names[selected_index])
+        provider_name = self.provider_names[selected_index]
+        self.provider_stack.set_visible_child_name(provider_name)
+        self._sync_provider_content_title(provider_name)
+
+    def _sync_provider_content_title(self, provider_name: str) -> None:
+        """Keep the collapsed content page title aligned with the selected provider."""
+        for provider_group in self.provider_groups:
+            if provider_group.provider_name == provider_name:
+                self.provider_content_page.set_title(provider_display_name(provider_group))
+                return
+        self.provider_content_page.set_title("DNS Providers")
+
+    @Gtk.Template.Callback()
+    def on_provider_sidebar_activated(self, _sidebar: Adw.Sidebar, _position: int) -> None:
+        """Reveal the content page after activating a provider in collapsed mode."""
+        self.split_view.set_show_content(True)
 
     def _reset_default_entries(self) -> None:
         """Restore bundled DNS entries that were previously hidden."""

@@ -29,6 +29,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Moved the `Check All` action from the sidebar footer into the header bar to keep provider navigation focused and free vertical space.
 - Added a tooltip to the header-bar `Check All` button to clarify that it benchmarks every listed DNS transport.
 - Removed an extra root container from the main window layout so the split view hierarchy stays simpler and easier to maintain.
+- Reimplemented the provider browser around `AdwNavigationSplitView` and `AdwBreakpoint` so the sidebar now follows the responsive layout pattern from the libadwaita documentation.
 
 ### Fixed
 - Fixed benchmark JSON export so raw DNS wire payloads no longer break serialization.
