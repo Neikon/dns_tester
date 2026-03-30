@@ -58,8 +58,8 @@
   </screenshots>
 
   <releases>
-    <release version="26.03.30.1128" date="2026-03-30">
-      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1128</url>
+    <release version="26.03.30.1137" date="2026-03-30">
+      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1137</url>
       <description translate="no">
         <p>This release modernizes DNS benchmarking and improves resolver management.</p>
         <ul>
@@ -67,6 +67,7 @@
           <li>Add a ranked Check All results dialog and move benchmark settings into a dedicated preferences dialog.</li>
           <li>Persist custom DNS entries and hidden bundled entries across restarts, including reset defaults support and structured origin metadata.</li>
           <li>Fix benchmark JSON copy so exporting results works correctly on GTK4 and Wayland sessions.</li>
+          <li>Ignore the local Codex marker file so repository status stays focused on project changes.</li>
         </ul>
       </description>
     </release>

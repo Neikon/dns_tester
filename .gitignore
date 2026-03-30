@@ -201,6 +201,9 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+# Local Codex marker file created by the tooling environment.
+.codex
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
