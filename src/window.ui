@@ -35,6 +35,13 @@
                         <signal name="clicked" handler="on_add_button_clicked"/>
                       </object>
                     </child>
+                    <child type="start">
+                      <object class="GtkButton" id="check_button">
+                        <property name="icon-name">system-run-symbolic</property>
+                        <property name="tooltip-text" translatable="yes">Benchmark all listed DNS transports</property>
+                        <signal name="clicked" handler="on_check_button_clicked"/>
+                      </object>
+                    </child>
                     <child type="end">
                       <object class="GtkMenuButton">
                         <property name="primary">True</property>
@@ -67,18 +74,7 @@
             <property name="child">
               <object class="AdwToolbarView">
                 <child type="top">
-                  <object class="AdwHeaderBar">
-                    <child type="end">
-                      <object class="GtkButton" id="check_button">
-                        <property name="label" translatable="yes">Check All</property>
-                        <property name="tooltip-text" translatable="yes">Benchmark all listed DNS transports</property>
-                        <style>
-                          <class name="suggested-action"/>
-                        </style>
-                        <signal name="clicked" handler="on_check_button_clicked"/>
-                      </object>
-                    </child>
-                  </object>
+                  <object class="AdwHeaderBar"/>
                 </child>
                 <property name="content">
                   <object class="AdwViewStack" id="provider_stack">

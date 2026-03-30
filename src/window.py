@@ -64,7 +64,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
     provider_content_page = Gtk.Template.Child()
     # View stack holding one provider page per DNS backend.
     provider_stack = Gtk.Template.Child()
-    # Header-bar button to run DNS latency checks.
+    # Compact sidebar-header button to run DNS latency checks for all listed transports.
     check_button = Gtk.Template.Child()
 
     def __init__(self, **kwargs):
