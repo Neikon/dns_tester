@@ -14,6 +14,9 @@ DNS Tester is a GTK4/Libadwaita desktop app for comparing recursive DNS provider
   - persistent HTTP client for `DoH`
   - persistent TLS streams for `DoT`
 - Concurrency control for the measured phase.
+- Persistent DNS entry management:
+  - removed bundled resolvers stay hidden after restart
+  - custom resolvers reappear after restart
 - Per-run structured metrics:
   - first-query latency
   - average latency
@@ -144,6 +147,5 @@ flatpak run es.neikon.dns_tester
 
 ## Roadmap
 
-- [ ] Persist custom DNS entries across sessions.
 - [ ] Add a dedicated export action for saving benchmark JSON to disk.
 - [ ] Add a CLI entry point that reuses the same benchmark engine as the GTK app.
