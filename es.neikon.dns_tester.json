@@ -1,7 +1,7 @@
 {
     "id" : "es.neikon.dns_tester",
     "runtime" : "org.gnome.Platform",
-    "runtime-version" : "49",
+    "runtime-version" : "50",
     "sdk" : "org.gnome.Sdk",
     "command" : "dns_tester",
     "finish-args" : [

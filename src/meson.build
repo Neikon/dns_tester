@@ -28,9 +28,14 @@ configure_file(
 
 dns_tester_sources = [
   '__init__.py',
+  'appdata.py',
   'main.py',
   'default_dns.py',
+  'dns_store.py',
+  'dns_groups.py',
+  'region_info.py',
   'aux.py',
+  'benchmark.py',
   'window.py',
 ]
 

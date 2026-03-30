@@ -25,6 +25,7 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
 from gi.repository import Gtk, Gio, Adw
+from .appdata import load_latest_release_notes
 from .window import DnsTesterWindow
 
 # Alias gettext for convenience when wrapping translatable strings.
@@ -40,7 +41,7 @@ class DnsTesterApplication(Adw.Application):
                          resource_base_path='/es/neikon/dns_tester')
         self.create_action('quit', lambda *_: self.quit(), ['<control>q'])
         self.create_action('about', self.on_about_action)
-        # self.create_action('preferences', self.on_preferences_action)
+        self.create_action('preferences', self.on_preferences_action, ['<control>comma'])
 
     def do_activate(self):
         """Called when the application is activated.
@@ -55,12 +56,17 @@ class DnsTesterApplication(Adw.Application):
 
     def on_about_action(self, *args):
         """Callback for the app.about action."""
+        release_notes_version, release_notes = load_latest_release_notes()
         about = Adw.AboutDialog(application_name='DNS Tester',
                                 application_icon='es.neikon.dns_tester',
                                 developer_name='neikon',
-                                version='26.03.30.0905',
+                                version='26.03.30.1745',
                                 developers=['neikon'],
                                 copyright='© 2025 neikon')
+        if release_notes and hasattr(about, "set_release_notes"):
+            about.set_release_notes(release_notes)
+        if release_notes_version and hasattr(about, "set_release_notes_version"):
+            about.set_release_notes_version(release_notes_version)
         about.set_comments(_('DNS Tester checks each server against the 50 most visited websites in Spain to estimate latency and reachability.'))
         about.set_website('https://github.com/Neikon/dns_tester')
         about.set_issue_url('https://github.com/Neikon/dns_tester/issues')
@@ -70,7 +76,9 @@ class DnsTesterApplication(Adw.Application):
 
     def on_preferences_action(self, widget, _):
         """Callback for the app.preferences action."""
-        print('app.preferences action activated')
+        active_window = self.props.active_window
+        if isinstance(active_window, DnsTesterWindow):
+            active_window.show_preferences_dialog()
 
     def create_action(self, name, callback, shortcuts=None):
         """Add an application action.

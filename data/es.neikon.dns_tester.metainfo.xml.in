@@ -58,13 +58,30 @@
   </screenshots>
 
   <releases>
-    <release version="26.03.30.0905" date="2026-03-30">
-      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.0905</url>
+    <release version="26.03.30.1745" date="2026-03-30">
+      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1745</url>
       <description translate="no">
-        <p>Release description</p>
+        <p>This release modernizes DNS benchmarking and improves resolver management.</p>
         <ul>
-          <li>List of changes</li>
-          <li>List of changes</li>
+          <li>Add fair benchmarking for Do53, DoT, and DoH with warm-up, connection reuse, cache control, and structured latency metrics.</li>
+          <li>Add a ranked Check All results dialog and move benchmark settings into a dedicated preferences dialog.</li>
+          <li>Persist custom DNS entries and hidden bundled entries across restarts, including reset defaults support and structured origin metadata.</li>
+          <li>Fix benchmark JSON copy so exporting results works correctly on GTK4 and Wayland sessions.</li>
+          <li>Ignore the local Codex marker file so repository status stays focused on project changes.</li>
+          <li>Clarify the Git workflow so finished local commits are pushed automatically after integration work.</li>
+          <li>Rework DNS browsing into a libadwaita 1.9 provider sidebar so each provider reveals its profiles and each profile expands into transport variants using the new AdwSidebar navigation.</li>
+          <li>Separate shipped providers from user-defined ones in the sidebar with dedicated Bundled and Custom sections.</li>
+          <li>Open the Check All results dialog immediately and refresh it live with progress while benchmarks are still running.</li>
+          <li>Move the Check All action into the header bar so the provider sidebar stays focused on navigation.</li>
+          <li>Add a tooltip to the Check All button so bulk benchmarking is clearer before running it.</li>
+          <li>Simplify the main window layout by removing an unnecessary root container around the split view.</li>
+          <li>Reimplement the provider browser around AdwNavigationSplitView with responsive sidebar-page behavior based on the libadwaita documentation.</li>
+          <li>Move the Check All action next to the provider controls as a compact icon button in the sidebar header.</li>
+          <li>Use a clearer play-style icon for the Check All action so it better communicates running every benchmark.</li>
+          <li>Remove region flags from provider names in the sidebar to keep the navigation list cleaner.</li>
+          <li>Keep provider titles plain throughout the UI and leave the region flags only in the dedicated origin line.</li>
+          <li>Raise the Flatpak runtime to GNOME 50 so the new sidebar widgets are available in the shipped app.</li>
+          <li>Integrate the new sidebar layout more cleanly and move the Check All action into a fixed footer at the bottom of the provider list.</li>
         </ul>
       </description>
     </release>

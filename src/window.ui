@@ -4,76 +4,86 @@
   <requires lib="Adw" version="1.0"/>
   <template class="DnsTesterWindow" parent="AdwApplicationWindow">
     <property name="title" translatable="yes">DNS Tester</property>
-    <property name="default-width">500</property>
-    <property name="default-height">720</property>
+    <property name="default-width">860</property>
+    <property name="default-height">760</property>
+    <child>
+      <object class="AdwBreakpoint">
+        <condition>max-width: 720sp</condition>
+        <setter object="split_view" property="collapsed">True</setter>
+        <setter object="provider_sidebar" property="mode">page</setter>
+      </object>
+    </child>
     <property name="content">
-      <object class="AdwToolbarView">
-        <child type="top">
-          <object class="AdwHeaderBar">
-            <child type="start">
-              <!-- Button to add new DNS entries from Python logic. -->
-              <object class="GtkButton" id="add_button">
-                <property name="icon-name">list-add-symbolic</property>
-                <property name="tooltip-text" translatable="yes">Add DNS</property>
-                <signal name="clicked" handler="on_add_button_clicked"/>
+      <object class="AdwNavigationSplitView" id="split_view">
+        <property name="hexpand">True</property>
+        <property name="vexpand">True</property>
+        <property name="min-sidebar-width">220</property>
+        <property name="max-sidebar-width">300</property>
+        <property name="sidebar-width-fraction">0.28</property>
+        <property name="sidebar">
+          <object class="AdwNavigationPage" id="provider_sidebar_page">
+            <property name="title" translatable="yes">Providers</property>
+            <property name="child">
+              <object class="AdwToolbarView">
+                <child type="top">
+                  <object class="AdwHeaderBar">
+                    <child type="start">
+                      <!-- Button to add new DNS entries from Python logic. -->
+                      <object class="GtkButton" id="add_button">
+                        <property name="icon-name">list-add-symbolic</property>
+                        <property name="tooltip-text" translatable="yes">Add DNS</property>
+                        <signal name="clicked" handler="on_add_button_clicked"/>
+                      </object>
+                    </child>
+                    <child type="start">
+                      <object class="GtkButton" id="check_button">
+                        <property name="icon-name">media-playback-start-symbolic</property>
+                        <property name="tooltip-text" translatable="yes">Benchmark all listed DNS transports</property>
+                        <signal name="clicked" handler="on_check_button_clicked"/>
+                      </object>
+                    </child>
+                    <child type="end">
+                      <object class="GtkMenuButton">
+                        <property name="primary">True</property>
+                        <property name="icon-name">open-menu-symbolic</property>
+                        <property name="tooltip-text" translatable="yes">Main Menu</property>
+                        <property name="menu-model">primary_menu</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <property name="content">
+                  <object class="GtkScrolledWindow">
+                    <property name="hexpand">True</property>
+                    <property name="vexpand">True</property>
+                    <child>
+                      <object class="AdwSidebar" id="provider_sidebar">
+                        <property name="mode">sidebar</property>
+                        <signal name="activated" handler="on_provider_sidebar_activated"/>
+                      </object>
+                    </child>
+                  </object>
+                </property>
               </object>
-            </child>
-            <child type="end">
-              <object class="GtkMenuButton">
-                <property name="primary">True</property>
-                <property name="icon-name">open-menu-symbolic</property>
-                <property name="tooltip-text" translatable="yes">Main Menu</property>
-                <property name="menu-model">primary_menu</property>
-              </object>
-            </child>
+            </property>
           </object>
-        </child>
+        </property>
         <property name="content">
-          <!-- Container with dynamic content area and a bottom action button. -->
-          <object class="GtkBox" id="root_box">
-            <property name="orientation">vertical</property>
-            <property name="spacing">12</property>
-            <property name="hexpand">True</property>
-            <property name="vexpand">True</property>
-            <property name="margin-start">12</property>
-            <property name="margin-end">12</property>
-            <property name="margin-top">12</property>
-            <property name="margin-bottom">12</property>
-            <child>
-              <!-- Scrollable container so the dynamic list does not overflow the view. -->
-              <object class="GtkScrolledWindow">
-                <property name="hexpand">True</property>
-                <property name="vexpand">True</property>
-                <property name="min-content-height">200</property>
-                <property name="propagate-natural-height">True</property>
-                <property name="propagate-natural-width">True</property>
-                <child>
-                  <!-- Empty container for dynamic content built in Python. -->
-                  <object class="GtkBox" id="content_box">
-                    <property name="orientation">vertical</property>
-                    <property name="spacing">0</property>
+          <object class="AdwNavigationPage" id="provider_content_page">
+            <property name="title" translatable="yes">DNS Providers</property>
+            <property name="child">
+              <object class="AdwToolbarView">
+                <child type="top">
+                  <object class="AdwHeaderBar"/>
+                </child>
+                <property name="content">
+                  <object class="AdwViewStack" id="provider_stack">
                     <property name="hexpand">True</property>
                     <property name="vexpand">True</property>
                   </object>
-                </child>
+                </property>
               </object>
-            </child>
-            <child>
-              <object class="GtkButton" id="check_button">
-                <property name="label" translatable="yes">Check All</property>
-                <property name="hexpand">True</property>
-                <property name="halign">fill</property>
-                <property name="height-request">48</property>
-                <property name="margin-top">0</property>
-                <property name="margin-bottom">0</property>
-                <property name="margin-start">12</property>
-                <property name="margin-end">12</property>
-                <style>
-                  <class name="suggested-action"/>
-                </style>
-                <signal name="clicked" handler="on_check_button_clicked"/>
-              </object>
-            </child>
+            </property>
           </object>
         </property>
       </object>
@@ -81,13 +91,9 @@
   </template>
   <menu id="primary_menu">
     <section>
-      <!-- <item>
+      <item>
         <attribute name="label" translatable="yes">_Preferences</attribute>
         <attribute name="action">app.preferences</attribute>
-      </item> -->
-      <item>
-        <attribute name="label" translatable="yes">_Keyboard Shortcuts</attribute>
-        <attribute name="action">app.shortcuts</attribute>
       </item>
       <item>
         <attribute name="label" translatable="yes">_About DNS Tester</attribute>
