@@ -24,6 +24,7 @@ class DnsEntry:
 
     id: str
     name: str
+    regions: list[str]
     target: str
     transport: str
     tls_hostname: str | None
@@ -54,6 +55,7 @@ class DnsStateStore:
         normalized = {
             "id": entry.get("id"),
             "name": entry.get("name"),
+            "regions": entry.get("regions", []),
             "target": entry.get("target"),
             "transport": entry.get("transport"),
             "tls_hostname": entry.get("tls_hostname"),
@@ -62,6 +64,11 @@ class DnsStateStore:
         required_fields = ("id", "name", "target", "transport", "doh_method")
         if not all(isinstance(normalized[field], str) and normalized[field] for field in required_fields):
             return None
+        if not isinstance(normalized["regions"], list):
+            normalized["regions"] = []
+        normalized["regions"] = [
+            region for region in normalized["regions"] if isinstance(region, str) and region
+        ]
         if normalized["tls_hostname"] is not None and not isinstance(normalized["tls_hostname"], str):
             normalized["tls_hostname"] = None
         return normalized
@@ -120,6 +127,7 @@ class DnsStateStore:
                 DnsEntry(
                     id=entry["id"],
                     name=entry["name"],
+                    regions=entry["regions"],
                     target=entry["target"],
                     transport=entry["transport"],
                     tls_hostname=entry["tls_hostname"],
@@ -133,6 +141,7 @@ class DnsStateStore:
                 DnsEntry(
                     id=entry["id"],
                     name=entry["name"],
+                    regions=entry["regions"],
                     target=entry["target"],
                     transport=entry["transport"],
                     tls_hostname=entry["tls_hostname"],
@@ -146,6 +155,7 @@ class DnsStateStore:
     def add_custom_entry(
         self,
         name: str,
+        regions: list[str],
         target: str,
         transport: str,
         tls_hostname: str | None,
@@ -156,6 +166,7 @@ class DnsStateStore:
         entry = {
             "id": f"custom-{uuid.uuid4().hex}",
             "name": name,
+            "regions": regions,
             "target": target,
             "transport": transport,
             "tls_hostname": tls_hostname,
@@ -166,6 +177,7 @@ class DnsStateStore:
         return DnsEntry(
             id=entry["id"],
             name=name,
+            regions=regions,
             target=target,
             transport=transport,
             tls_hostname=tls_hostname,
@@ -187,4 +199,10 @@ class DnsStateStore:
         state["custom_entries"] = [
             entry for entry in state["custom_entries"] if entry["id"] != entry_id
         ]
+        self._save_state(state)
+
+    def reset_hidden_defaults(self) -> None:
+        """Restore all bundled DNS entries that were previously hidden by the user."""
+        state = self._load_state()
+        state["hidden_default_ids"] = []
         self._save_state(state)

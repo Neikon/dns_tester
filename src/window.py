@@ -32,6 +32,8 @@ from .benchmark import ResolverEndpoint
 from .benchmark import run_benchmark_sync
 from .default_dns import DEFAULT_DNS
 from .dns_store import DnsStateStore
+from .region_info import decorate_name_with_regions
+from .region_info import format_region_summary
 
 # Supported resolver transports exposed in the add-entry dialog.
 TRANSPORTS = ("Do53", "DoT", "DoH")
@@ -84,6 +86,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             self._add_row(
                 entry.id,
                 entry.name,
+                entry.regions,
                 entry.target,
                 entry.transport,
                 entry.tls_hostname,
@@ -92,6 +95,35 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             )
 
         self.content_box.append(self.list_box)
+
+    def _reload_dns_rows(self) -> None:
+        """Rebuild the visible DNS list from persisted state."""
+        row = self.list_box.get_first_child()
+        while row is not None:
+            next_row = row.get_next_sibling()
+            self.list_box.remove(row)
+            row = next_row
+
+        for entry in self.dns_store.load_entries(DEFAULT_DNS):
+            self._add_row(
+                entry.id,
+                entry.name,
+                entry.regions,
+                entry.target,
+                entry.transport,
+                entry.tls_hostname,
+                entry.doh_method,
+                entry.is_default,
+            )
+
+    def _reset_default_entries(self) -> None:
+        """Restore bundled DNS entries that were previously hidden."""
+        try:
+            self.dns_store.reset_hidden_defaults()
+        except OSError as error:
+            self._show_error_dialog("Could not save DNS changes", str(error))
+            return
+        self._reload_dns_rows()
 
     def _build_spin_row(
         self,
@@ -165,6 +197,18 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         )
         benchmark_group.add(warmup_row)
 
+        reset_row = Adw.ActionRow(
+            title="Reset Defaults",
+            subtitle="Restore bundled DNS entries that were removed earlier",
+            activatable=False,
+            selectable=False,
+        )
+        reset_button = Gtk.Button(label="Reset")
+        reset_button.add_css_class("destructive-action")
+        reset_button.connect("clicked", lambda _button: self._reset_default_entries())
+        reset_row.add_suffix(reset_button)
+        benchmark_group.add(reset_row)
+
         preferences_page.add(benchmark_group)
         toolbar_view.set_content(preferences_page)
         dialog.set_child(toolbar_view)
@@ -233,7 +277,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
     def _benchmark_endpoint(self, expander_row: Adw.ExpanderRow) -> ResolverEndpoint:
         """Build the benchmark endpoint consumed by the transport engine."""
         return ResolverEndpoint(
-            name=expander_row.get_title(),
+            name=getattr(expander_row, "dns_name", expander_row.get_title()),
             transport=getattr(expander_row, "dns_transport", "Do53"),
             target=getattr(expander_row, "dns_target", ""),
             tls_hostname=getattr(expander_row, "dns_server_name", None),
@@ -404,6 +448,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         self,
         entry_id: str,
         name: str,
+        regions: list[str],
         target: str,
         transport: str,
         server_name: str | None = None,
@@ -412,7 +457,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
     ) -> None:
         """Create and append an expander row with the given resolver settings."""
         expander_row = Adw.ExpanderRow(
-            title=name,
+            title=decorate_name_with_regions(name, regions),
             subtitle=self._transport_summary(transport, target),
             activatable=False,
             selectable=False,
@@ -420,6 +465,8 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         # Row metadata keeps the benchmark engine independent from the rendered strings.
         expander_row.dns_entry_id = entry_id
         expander_row.dns_is_default = is_default
+        expander_row.dns_name = name
+        expander_row.dns_regions = list(regions)
         expander_row.dns_target = target
         expander_row.dns_transport = transport
         expander_row.dns_server_name = server_name
@@ -447,6 +494,15 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         )
         expander_row.add_row(endpoint_row)
         expander_row.add_row(transport_row)
+
+        if regions:
+            region_row = Adw.ActionRow(
+                title="Origin",
+                subtitle=format_region_summary(regions),
+                activatable=False,
+                selectable=False,
+            )
+            expander_row.add_row(region_row)
 
         detail_value = None
         if transport == "DoT" and server_name and server_name != target:
@@ -631,6 +687,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                 try:
                     entry = self.dns_store.add_custom_entry(
                         name,
+                        [],
                         target,
                         transport,
                         tls_hostname,
@@ -643,6 +700,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                 self._add_row(
                     entry.id,
                     entry.name,
+                    entry.regions,
                     entry.target,
                     entry.transport,
                     entry.tls_hostname,
