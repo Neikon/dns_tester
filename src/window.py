@@ -266,22 +266,39 @@ class DnsTesterWindow(Adw.ApplicationWindow):
 
         dialog = Adw.Dialog.new()
         dialog.set_title("Check All Results")
-        dialog.set_content_width(640)
-        dialog.set_content_height(620)
+        dialog.set_content_width(680)
+        dialog.set_content_height(760)
         dialog.set_can_close(True)
 
         toolbar_view = Adw.ToolbarView()
         header_bar = Adw.HeaderBar()
         toolbar_view.add_top_bar(header_bar)
 
-        status_page = Adw.StatusPage(
-            title="Ranking completed",
-            description=(
-                f"{len(successful_runs)} successful benchmarks, {failed_runs} failed. "
-                "Resolvers are sorted from best to worst using average latency and p95."
-            ),
-            icon_name="network-workgroup-symbolic",
+        summary_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=6,
+            margin_top=18,
+            margin_bottom=6,
+            margin_start=18,
+            margin_end=18,
         )
+        summary_title = Gtk.Label(
+            label="Ranking completed",
+            xalign=0.0,
+        )
+        summary_title.add_css_class("title-3")
+        summary_box.append(summary_title)
+
+        summary_description = Gtk.Label(
+            label=(
+                f"{len(successful_runs)} successful benchmarks, {failed_runs} failed. "
+                "Resolvers are ordered from best to worst using average latency and p95."
+            ),
+            wrap=True,
+            xalign=0.0,
+        )
+        summary_description.add_css_class("dim-label")
+        summary_box.append(summary_description)
 
         ranking_group = Adw.PreferencesGroup(
             title="Final Ranking",
@@ -298,13 +315,12 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             ranking_group.add(row)
 
         content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        content_box.append(status_page)
+        content_box.append(summary_box)
 
         scrolled_window = Gtk.ScrolledWindow(
             hexpand=True,
             vexpand=True,
-            min_content_height=320,
-            propagate_natural_height=True,
+            min_content_height=420,
         )
         preferences_page = Adw.PreferencesPage()
         preferences_page.add(ranking_group)
