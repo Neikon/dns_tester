@@ -259,6 +259,10 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             spacing=12,
             hexpand=True,
             vexpand=True,
+            margin_top=12,
+            margin_bottom=12,
+            margin_start=12,
+            margin_end=12,
         )
         panel_box.dns_provider_name = provider_group.provider_name
 
