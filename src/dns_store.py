@@ -15,7 +15,7 @@ from gi.repository import GLib
 from .default_dns import DefaultDnsEntry
 
 # Persisted data is versioned so the schema can evolve without guessing.
-STATE_VERSION = 1
+STATE_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -23,7 +23,8 @@ class DnsEntry:
     """Full DNS entry used by the window layer."""
 
     id: str
-    name: str
+    provider_name: str
+    profile_name: str
     regions: list[str]
     target: str
     transport: str
@@ -47,21 +48,34 @@ class DnsStateStore:
             "custom_entries": [],
         }
 
-    def _normalize_custom_entry(self, entry: object) -> dict[str, str | None] | None:
+    def _normalize_custom_entry(self, entry: object) -> dict[str, object] | None:
         """Validate one persisted custom entry and discard malformed data."""
         if not isinstance(entry, dict):
             return None
 
+        provider_name = entry.get("provider_name")
+        if not isinstance(provider_name, str) or not provider_name:
+            legacy_name = entry.get("name")
+            if isinstance(legacy_name, str) and legacy_name:
+                provider_name = legacy_name
+            else:
+                provider_name = None
+
+        profile_name = entry.get("profile_name")
+        if not isinstance(profile_name, str) or not profile_name:
+            profile_name = "Custom"
+
         normalized = {
             "id": entry.get("id"),
-            "name": entry.get("name"),
+            "provider_name": provider_name,
+            "profile_name": profile_name,
             "regions": entry.get("regions", []),
             "target": entry.get("target"),
             "transport": entry.get("transport"),
             "tls_hostname": entry.get("tls_hostname"),
             "doh_method": entry.get("doh_method", "POST"),
         }
-        required_fields = ("id", "name", "target", "transport", "doh_method")
+        required_fields = ("id", "provider_name", "profile_name", "target", "transport", "doh_method")
         if not all(isinstance(normalized[field], str) and normalized[field] for field in required_fields):
             return None
         if not isinstance(normalized["regions"], list):
@@ -126,7 +140,8 @@ class DnsStateStore:
             entries.append(
                 DnsEntry(
                     id=entry["id"],
-                    name=entry["name"],
+                    provider_name=entry["provider_name"],
+                    profile_name=entry["profile_name"],
                     regions=entry["regions"],
                     target=entry["target"],
                     transport=entry["transport"],
@@ -140,7 +155,8 @@ class DnsStateStore:
             entries.append(
                 DnsEntry(
                     id=entry["id"],
-                    name=entry["name"],
+                    provider_name=entry["provider_name"],
+                    profile_name=entry["profile_name"],
                     regions=entry["regions"],
                     target=entry["target"],
                     transport=entry["transport"],
@@ -154,7 +170,8 @@ class DnsStateStore:
 
     def add_custom_entry(
         self,
-        name: str,
+        provider_name: str,
+        profile_name: str,
         regions: list[str],
         target: str,
         transport: str,
@@ -165,7 +182,8 @@ class DnsStateStore:
         state = self._load_state()
         entry = {
             "id": f"custom-{uuid.uuid4().hex}",
-            "name": name,
+            "provider_name": provider_name,
+            "profile_name": profile_name,
             "regions": regions,
             "target": target,
             "transport": transport,
@@ -176,7 +194,8 @@ class DnsStateStore:
         self._save_state(state)
         return DnsEntry(
             id=entry["id"],
-            name=name,
+            provider_name=provider_name,
+            profile_name=profile_name,
             regions=regions,
             target=target,
             transport=transport,
