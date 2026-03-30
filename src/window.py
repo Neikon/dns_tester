@@ -36,7 +36,6 @@ from .dns_groups import DnsProfileGroup
 from .dns_groups import DnsProviderGroup
 from .dns_groups import group_dns_providers
 from .dns_groups import group_transport_summary
-from .dns_groups import provider_display_name
 from .dns_groups import provider_has_custom_entries
 from .dns_groups import provider_sidebar_summary
 from .dns_groups import variant_display_name
@@ -173,7 +172,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         """Keep the collapsed content page title aligned with the selected provider."""
         for provider_group in self.provider_groups:
             if provider_group.provider_name == provider_name:
-                self.provider_content_page.set_title(provider_display_name(provider_group))
+                self.provider_content_page.set_title(provider_group.provider_name)
                 return
         self.provider_content_page.set_title("DNS Providers")
 
@@ -335,7 +334,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             margin_bottom=6,
         )
         title_label = Gtk.Label(
-            label=provider_display_name(provider_group),
+            label=provider_group.provider_name,
             xalign=0.0,
         )
         title_label.add_css_class("title-2")
