@@ -9,7 +9,6 @@ install_data(
 provider_icons = files(
   scalable_dir / 'es.neikon.dns_tester-provider-adguard.svg',
   scalable_dir / 'es.neikon.dns_tester-provider-cloudflare.svg',
-  scalable_dir / 'es.neikon.dns_tester-provider-controld.svg',
   scalable_dir / 'es.neikon.dns_tester-provider-dns4eu.svg',
   scalable_dir / 'es.neikon.dns_tester-provider-flashstart.svg',
   scalable_dir / 'es.neikon.dns_tester-provider-gcore.svg',
@@ -21,6 +20,12 @@ provider_icons = files(
 install_data(
   provider_icons,
   install_dir: get_option('datadir') / 'icons' / scalable_dir
+)
+
+bitmap_dir = 'hicolor' / '128x128' / 'apps'
+install_data(
+  bitmap_dir / 'es.neikon.dns_tester-provider-controld.png',
+  install_dir: get_option('datadir') / 'icons' / bitmap_dir
 )
 
 symbolic_dir = 'hicolor' / 'symbolic' / 'apps'
