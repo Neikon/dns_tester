@@ -19,8 +19,9 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Updated the About dialog to read the latest release notes from the AppStream metainfo file.
 - Ignored the local `.codex` workspace marker so it no longer shows up in repository status.
 - Documented that completed Git work must be pushed automatically so branches do not remain local-only by accident.
-- Reworked DNS browsing into a provider sidebar so each provider now reveals its profiles, and each profile expands into its transport variants.
+- Reworked DNS browsing into a libadwaita 1.9 provider sidebar so each provider now reveals its profiles, and each profile expands into its transport variants.
 - Updated custom DNS entry storage to persist provider and profile metadata and keep older flat entries readable.
+- Raised the Flatpak runtime to GNOME 50 so the new libadwaita 1.9 sidebar widgets are available.
 
 ### Fixed
 - Fixed benchmark JSON export so raw DNS wire payloads no longer break serialization.

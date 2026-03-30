@@ -58,8 +58,8 @@
   </screenshots>
 
   <releases>
-    <release version="26.03.30.1226" date="2026-03-30">
-      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1226</url>
+    <release version="26.03.30.1238" date="2026-03-30">
+      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1238</url>
       <description translate="no">
         <p>This release modernizes DNS benchmarking and improves resolver management.</p>
         <ul>
@@ -69,7 +69,8 @@
           <li>Fix benchmark JSON copy so exporting results works correctly on GTK4 and Wayland sessions.</li>
           <li>Ignore the local Codex marker file so repository status stays focused on project changes.</li>
           <li>Clarify the Git workflow so finished local commits are pushed automatically after integration work.</li>
-          <li>Rework DNS browsing into a provider sidebar so each provider reveals its profiles and each profile expands into transport variants.</li>
+          <li>Rework DNS browsing into a libadwaita 1.9 provider sidebar so each provider reveals its profiles and each profile expands into transport variants.</li>
+          <li>Raise the Flatpak runtime to GNOME 50 so the new sidebar widgets are available in the shipped app.</li>
         </ul>
       </description>
     </release>
