@@ -58,8 +58,8 @@
   </screenshots>
 
   <releases>
-    <release version="26.03.30.2106" date="2026-03-30">
-      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.2106</url>
+    <release version="26.03.30.2110" date="2026-03-30">
+      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.2110</url>
       <description translate="no">
         <p>This release modernizes DNS benchmarking and improves resolver management.</p>
         <ul>
@@ -90,6 +90,7 @@
           <li>Simplify provider icon lookup so icon names are derived from the provider label instead of a repetitive manual map.</li>
           <li>Replace the placeholder Google and Cloudflare sidebar icons with the favicons published by their websites.</li>
           <li>Replace the placeholder NextDNS sidebar icon with the favicon published by its website and refresh the AdGuard asset from the official AdGuard DNS favicon.</li>
+          <li>Replace the placeholder Quad9 sidebar icon with the favicon published by the Quad9 website.</li>
           <li>Expand the bundled AdGuard defaults to ship the official Default, Non-filtering, and Family Protection profiles for Do53, DoT, and DoH.</li>
           <li>Expand the bundled Quad9 defaults to ship the recommended Malware Blocking and DNSSEC profile for Do53, DoT, and DoH.</li>
           <li>Raise the Flatpak runtime to GNOME 50 so the new sidebar widgets are available in the shipped app.</li>
