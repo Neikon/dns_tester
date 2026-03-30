@@ -26,6 +26,7 @@ from gi.repository import GLib
 from gi.repository import Gtk
 
 from .aux import TOP_ES_WEBS
+from .benchmark import BenchmarkResult
 from .benchmark import BenchmarkOptions
 from .benchmark import ResolverEndpoint
 from .benchmark import run_benchmark_sync
@@ -59,6 +60,10 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         self.concurrency_value = 10
         self.warmup_queries_value = 5
         self.preferences_dialog: Adw.Dialog | None = None
+        # Batch state tracks a running "Check All" operation and its final ranking.
+        self.check_all_batch_id = 0
+        self.check_all_pending = 0
+        self.check_all_results: list[tuple[str, object]] = []
 
         # The dynamic resolver list stays below the shared controls.
         self.list_box = Gtk.ListBox(
@@ -237,6 +242,104 @@ class DnsTesterWindow(Adw.ApplicationWindow):
         if result.http_version:
             detail_parts.append(result.http_version)
         return " | ".join(detail_parts) if detail_parts else "No extra transport metrics"
+
+    def _ranked_results(
+        self,
+        results: list[tuple[str, object]],
+    ) -> list[tuple[str, object]]:
+        """Sort successful runs by latency and place failed runs at the end."""
+        return sorted(
+            results,
+            key=lambda item: (
+                item[1].error is not None or item[1].average_latency_ms is None,
+                item[1].average_latency_ms if item[1].average_latency_ms is not None else float("inf"),
+                item[1].p95_latency_ms if item[1].p95_latency_ms is not None else float("inf"),
+                -(item[1].success_rate or 0.0),
+            ),
+        )
+
+    def _show_check_all_results_dialog(self, results: list[tuple[str, object]]) -> None:
+        """Present the final ranking for a completed Check All run."""
+        ranked_results = self._ranked_results(results)
+        successful_runs = [result for _name, result in ranked_results if result.error is None]
+        failed_runs = len(ranked_results) - len(successful_runs)
+
+        dialog = Adw.Dialog.new()
+        dialog.set_title("Check All Results")
+        dialog.set_content_width(680)
+        dialog.set_content_height(760)
+        dialog.set_can_close(True)
+
+        toolbar_view = Adw.ToolbarView()
+        header_bar = Adw.HeaderBar()
+        toolbar_view.add_top_bar(header_bar)
+
+        summary_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=6,
+            margin_top=18,
+            margin_bottom=6,
+            margin_start=18,
+            margin_end=18,
+        )
+        summary_title = Gtk.Label(
+            label="Ranking completed",
+            xalign=0.0,
+        )
+        summary_title.add_css_class("title-3")
+        summary_box.append(summary_title)
+
+        summary_description = Gtk.Label(
+            label=(
+                f"{len(successful_runs)} successful benchmarks, {failed_runs} failed. "
+                "Resolvers are ordered from best to worst using average latency and p95."
+            ),
+            wrap=True,
+            xalign=0.0,
+        )
+        summary_description.add_css_class("dim-label")
+        summary_box.append(summary_description)
+
+        ranking_group = Adw.PreferencesGroup(
+            title="Final Ranking",
+            description="Use this ranking only when the compared rows belong to the same provider/backend family.",
+        )
+
+        for position, (name, result) in enumerate(ranked_results, start=1):
+            row = Adw.ActionRow(
+                title=f"{position}. {name}",
+                subtitle=f"{result.summary_line()}\n{result.detail_line()}",
+                activatable=False,
+                selectable=False,
+            )
+            ranking_group.add(row)
+
+        content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        content_box.append(summary_box)
+
+        scrolled_window = Gtk.ScrolledWindow(
+            hexpand=True,
+            vexpand=True,
+            min_content_height=420,
+        )
+        preferences_page = Adw.PreferencesPage()
+        preferences_page.add(ranking_group)
+        scrolled_window.set_child(preferences_page)
+        content_box.append(scrolled_window)
+
+        toolbar_view.set_content(content_box)
+        dialog.set_child(toolbar_view)
+        dialog.present(self)
+
+    def _finish_check_all_batch(self, batch_id: int) -> None:
+        """Re-enable the bulk action button and show the final batch ranking."""
+        if batch_id != self.check_all_batch_id:
+            return
+        self.check_button.set_sensitive(True)
+        if self.check_all_results:
+            self._show_check_all_results_dialog(self.check_all_results)
+        self.check_all_results = []
+        self.check_all_pending = 0
 
     def _add_row(
         self,
@@ -483,16 +586,28 @@ class DnsTesterWindow(Adw.ApplicationWindow):
     @Gtk.Template.Callback()
     def on_check_button_clicked(self, _button: Gtk.Button) -> None:
         """Run all resolver benchmarks with the shared benchmark settings."""
+        rows: list[Adw.ExpanderRow] = []
         row = self.list_box.get_first_child()
         while row is not None:
             if isinstance(row, Adw.ExpanderRow):
-                self._run_test_async(None, row)
+                rows.append(row)
             row = row.get_next_sibling()
+        if not rows:
+            return
+
+        self.check_all_batch_id += 1
+        self.check_all_pending = len(rows)
+        self.check_all_results = []
+        self.check_button.set_sensitive(False)
+
+        for row in rows:
+            self._run_test_async(None, row, batch_id=self.check_all_batch_id)
 
     def _run_test_async(
         self,
         _button: Gtk.Button | None,
         expander_row: Adw.ExpanderRow,
+        batch_id: int | None = None,
     ) -> None:
         """Execute the benchmark in a worker thread and update the row from the GTK main loop."""
         result_row = getattr(expander_row, "result_row")
@@ -558,6 +673,31 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                     transport_metrics_row.set_title("Transport Metrics")
                     transport_metrics_row.set_subtitle("No transport details collected")
                     copy_button.set_sensitive(False)
+                    if batch_id is not None and batch_id == self.check_all_batch_id:
+                        self.check_all_results.append(
+                            (
+                                expander_row.get_title(),
+                                BenchmarkResult(
+                                    protocol=endpoint.transport,
+                                    endpoint=endpoint.target,
+                                    target=endpoint.target,
+                                    cache_mode=options.cache_mode,
+                                    warmup_queries=options.warmup_queries,
+                                    concurrency=options.concurrency,
+                                    first_query_latency_ms=None,
+                                    average_latency_ms=None,
+                                    p95_latency_ms=None,
+                                    success_rate=0.0,
+                                    successful_queries=0,
+                                    total_queries=len(TOP_ES_WEBS),
+                                    resolved_target=endpoint.bootstrap_address,
+                                    error=error_text,
+                                ),
+                            )
+                        )
+                        self.check_all_pending -= 1
+                        if self.check_all_pending == 0:
+                            self._finish_check_all_batch(batch_id)
                     return False
 
                 expander_row.dns_resolved_target = result.resolved_target
@@ -577,6 +717,11 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                     print(result.table_header(), flush=False)
                     self._printed_console_header = True
                 print(result.table_row(), flush=True)
+                if batch_id is not None and batch_id == self.check_all_batch_id:
+                    self.check_all_results.append((expander_row.get_title(), result))
+                    self.check_all_pending -= 1
+                    if self.check_all_pending == 0:
+                        self._finish_check_all_batch(batch_id)
                 return False
 
             GLib.idle_add(update_ui)
