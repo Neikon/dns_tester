@@ -16,6 +16,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Moved benchmark settings to a dedicated preferences dialog.
 - Improved the `Check All` results dialog so the summary remains visible while the ranking scrolls.
 - Refactored bundled DNS metadata to use stable IDs and structured origin tags instead of hardcoded flag text in provider names.
+- Updated the About dialog to read the latest release notes from the AppStream metainfo file.
 
 ### Fixed
 - Fixed benchmark JSON export so raw DNS wire payloads no longer break serialization.
