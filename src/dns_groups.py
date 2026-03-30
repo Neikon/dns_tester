@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from dataclasses import field
 
 from .dns_store import DnsEntry
-from .region_info import decorate_name_with_regions
 
 # Transport order stays stable so grouped variants always appear predictably.
 TRANSPORT_ORDER = {
@@ -98,12 +97,6 @@ def group_dns_providers(entries: list[DnsEntry]) -> list[DnsProviderGroup]:
 
     return ordered_providers
 
-
-def provider_display_name(group: DnsProviderGroup) -> str:
-    """Build the top-level provider title decorated with region flags."""
-    return decorate_name_with_regions(group.provider_name, group.regions)
-
-
 def provider_sidebar_summary(group: DnsProviderGroup) -> str:
     """Render sidebar metadata for one provider."""
     available_transports: list[str] = []
@@ -113,12 +106,6 @@ def provider_sidebar_summary(group: DnsProviderGroup) -> str:
                 available_transports.append(entry.transport)
     profile_label = "profile" if len(group.profiles) == 1 else "profiles"
     return f"{len(group.profiles)} {profile_label} · {' · '.join(available_transports)}"
-
-
-def group_display_name(group: DnsProfileGroup) -> str:
-    """Build the top-level group title decorated with region flags."""
-    return decorate_name_with_regions(group.provider_name, group.regions)
-
 
 def group_transport_summary(group: DnsProfileGroup) -> str:
     """Render a compact transport list for the group subtitle."""
