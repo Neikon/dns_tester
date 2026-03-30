@@ -14,6 +14,12 @@ description: Agent directives for the DNS_Tester project.
 - Keep app versioning consistent across meson.build, src/main.py (AboutDialog), and data/es.neikon.dns_tester.metainfo.xml.in.
 - On every commit, bump the version using the format YY.MM.DD.hhmm (year’s last two digits, month, day, then hour+minute; omit hhmm if only one bump in the day).
 - When bumping version, derive the current date/time yourself by running a terminal command (e.g., `date`) rather than hardcoding it.
+- Maintain `CHANGELOG.md` and update it whenever a user-visible change, release-facing fix, or release-management change is introduced.
+- Add new changelog notes to the `Unreleased` section while work is in progress.
+- When preparing a release, move the relevant `Unreleased` entries into a dated version section, newest first.
+- Keep changelog entries concise, grouped by category, and focused on user-visible impact rather than low-level implementation detail.
+- Keep the latest `<release>` entry in `data/es.neikon.dns_tester.metainfo.xml.in` in sync with the changes since the previous release.
+- Replace placeholder release notes in the metainfo file with short, real user-facing bullets derived from the changelog or release work.
 
 ## Persistent Git Policy
 - Codex must manage Git autonomously using GitFlow whenever the repository state allows it.

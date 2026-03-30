@@ -58,13 +58,14 @@
   </screenshots>
 
   <releases>
-    <release version="26.03.30.1109" date="2026-03-30">
-      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1109</url>
+    <release version="26.03.30.1122" date="2026-03-30">
+      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1122</url>
       <description translate="no">
-        <p>Release description</p>
+        <p>This release modernizes DNS benchmarking and improves resolver management.</p>
         <ul>
-          <li>List of changes</li>
-          <li>List of changes</li>
+          <li>Add fair benchmarking for Do53, DoT, and DoH with warm-up, connection reuse, cache control, and structured latency metrics.</li>
+          <li>Add a ranked Check All results dialog and move benchmark settings into a dedicated preferences dialog.</li>
+          <li>Persist custom DNS entries and hidden bundled entries across restarts, including reset defaults support and structured origin metadata.</li>
         </ul>
       </description>
     </release>
