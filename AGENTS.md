@@ -20,6 +20,7 @@ description: Agent directives for the DNS_Tester project.
 - Keep changelog entries concise, grouped by category, and focused on user-visible impact rather than low-level implementation detail.
 - Keep the latest `<release>` entry in `data/es.neikon.dns_tester.metainfo.xml.in` in sync with the changes since the previous release.
 - Replace placeholder release notes in the metainfo file with short, real user-facing bullets derived from the changelog or release work.
+- After creating a commit or integrating a branch, push the resulting branch to its configured remote automatically unless the user explicitly asks to keep it local.
 
 ## Persistent Git Policy
 - Codex must manage Git autonomously using GitFlow whenever the repository state allows it.
@@ -55,6 +56,7 @@ description: Agent directives for the DNS_Tester project.
 - Pull requests should target `develop` for `feature/*`, `bugfix/*`, `refactor/*`, and `chore/*` branches when the environment supports PR creation.
 - `release/*` and `hotfix/*` branches should be integrated into both `main` and `develop` when the environment supports PR creation.
 - Codex is responsible for keeping history clean, avoiding chaotic commits, and avoiding long-lived branches when integration is possible.
+- Codex must publish completed local commit and merge work promptly so `develop`, `main`, or the active work branch do not remain unintentionally local-only.
 
 ## Slash Commands
 - /commit <message>: Stage tracked changes and create a git commit using the user's name as author.
