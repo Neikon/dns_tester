@@ -58,8 +58,8 @@
   </screenshots>
 
   <releases>
-    <release version="26.03.30.2041" date="2026-03-30">
-      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.2041</url>
+    <release version="26.03.30.2046" date="2026-03-30">
+      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.2046</url>
       <description translate="no">
         <p>This release modernizes DNS benchmarking and improves resolver management.</p>
         <ul>
@@ -88,6 +88,7 @@
           <li>Remove the obsolete duplicate provider icon files from data/icons so the sidebar uses only the new dedicated provider icon asset set.</li>
           <li>Replace the placeholder DNS4EU, FlashStart, Gcore, and Mullvad sidebar icons with the favicons published by their websites.</li>
           <li>Simplify provider icon lookup so icon names are derived from the provider label instead of a repetitive manual map.</li>
+          <li>Replace the placeholder Google and Cloudflare sidebar icons with the favicons published by their websites.</li>
           <li>Raise the Flatpak runtime to GNOME 50 so the new sidebar widgets are available in the shipped app.</li>
           <li>Integrate the new sidebar layout more cleanly and move the Check All action into a fixed footer at the bottom of the provider list.</li>
         </ul>
