@@ -58,8 +58,8 @@
   </screenshots>
 
   <releases>
-    <release version="26.03.30.1745" date="2026-03-30">
-      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1745</url>
+    <release version="26.03.30.1800" date="2026-03-30">
+      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.1800</url>
       <description translate="no">
         <p>This release modernizes DNS benchmarking and improves resolver management.</p>
         <ul>
@@ -80,6 +80,7 @@
           <li>Use a clearer play-style icon for the Check All action so it better communicates running every benchmark.</li>
           <li>Remove region flags from provider names in the sidebar to keep the navigation list cleaner.</li>
           <li>Keep provider titles plain throughout the UI and leave the region flags only in the dedicated origin line.</li>
+          <li>Update the README screenshot to match the current provider-browser interface and remove the outdated image.</li>
           <li>Raise the Flatpak runtime to GNOME 50 so the new sidebar widgets are available in the shipped app.</li>
           <li>Integrate the new sidebar layout more cleanly and move the Check All action into a fixed footer at the bottom of the provider list.</li>
         </ul>

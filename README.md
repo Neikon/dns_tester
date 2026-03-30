@@ -2,7 +2,7 @@
 
 DNS Tester is a GTK4/Libadwaita desktop app for comparing recursive DNS providers across `Do53`, `DoT`, and `DoH` with a methodology that tries to stay fair to encrypted transports.
 
-![Screenshot](screenshots/Captura%20de%20pantalla_20251223_113809.png)
+![Screenshot](screenshots/provider-browser.png)
 
 ## Features
 
