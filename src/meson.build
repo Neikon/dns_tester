@@ -30,6 +30,8 @@ dns_tester_sources = [
   '__init__.py',
   'main.py',
   'default_dns.py',
+  'dns_store.py',
+  'region_info.py',
   'aux.py',
   'benchmark.py',
   'window.py',
