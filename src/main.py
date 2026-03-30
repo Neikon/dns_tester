@@ -40,7 +40,7 @@ class DnsTesterApplication(Adw.Application):
                          resource_base_path='/es/neikon/dns_tester')
         self.create_action('quit', lambda *_: self.quit(), ['<control>q'])
         self.create_action('about', self.on_about_action)
-        # self.create_action('preferences', self.on_preferences_action)
+        self.create_action('preferences', self.on_preferences_action, ['<control>comma'])
 
     def do_activate(self):
         """Called when the application is activated.
@@ -58,7 +58,7 @@ class DnsTesterApplication(Adw.Application):
         about = Adw.AboutDialog(application_name='DNS Tester',
                                 application_icon='es.neikon.dns_tester',
                                 developer_name='neikon',
-                                version='26.03.30.0905',
+                                version='26.03.30.1022',
                                 developers=['neikon'],
                                 copyright='© 2025 neikon')
         about.set_comments(_('DNS Tester checks each server against the 50 most visited websites in Spain to estimate latency and reachability.'))
@@ -70,7 +70,9 @@ class DnsTesterApplication(Adw.Application):
 
     def on_preferences_action(self, widget, _):
         """Callback for the app.preferences action."""
-        print('app.preferences action activated')
+        active_window = self.props.active_window
+        if isinstance(active_window, DnsTesterWindow):
+            active_window.show_preferences_dialog()
 
     def create_action(self, name, callback, shortcuts=None):
         """Add an application action.
