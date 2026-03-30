@@ -21,6 +21,7 @@
             <child type="end">
               <object class="GtkButton" id="check_button">
                 <property name="label" translatable="yes">Check All</property>
+                <property name="tooltip-text" translatable="yes">Benchmark all listed DNS transports</property>
                 <style>
                   <class name="suggested-action"/>
                 </style>
