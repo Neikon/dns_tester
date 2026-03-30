@@ -20,6 +20,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 
 ### Fixed
 - Fixed benchmark JSON export so raw DNS wire payloads no longer break serialization.
+- Fixed benchmark JSON copy on GTK4/Wayland by using the current clipboard API.
 
 ## [25.12.08] - 2025-12-08
 

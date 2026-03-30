@@ -23,6 +23,7 @@ from urllib.parse import urlparse
 
 from gi.repository import Adw
 from gi.repository import GLib
+from gi.repository import GObject
 from gi.repository import Gtk
 
 from .aux import TOP_ES_WEBS
@@ -556,7 +557,11 @@ class DnsTesterWindow(Adw.ApplicationWindow):
             """Copy the latest structured result so runs can be exported elsewhere."""
             latest_result_json = getattr(expander_row, "latest_result_json", None)
             if latest_result_json:
-                self.get_display().get_clipboard().set_text(latest_result_json)
+                # GTK4 clipboard APIs consume typed values instead of the GTK3-style set_text helper.
+                clipboard_value = GObject.Value()
+                clipboard_value.init(str)
+                clipboard_value.set_string(latest_result_json)
+                self.get_display().get_clipboard().set(clipboard_value)
 
         copy_button.connect("clicked", copy_json)
         transport_metrics_row.add_suffix(copy_button)
