@@ -4,9 +4,6 @@
 provider_scalable_icons = files(
   'scalable/es.neikon.dns_tester-provider-adguard.svg',
   'scalable/es.neikon.dns_tester-provider-cloudflare.svg',
-  'scalable/es.neikon.dns_tester-provider-dns4eu.svg',
-  'scalable/es.neikon.dns_tester-provider-flashstart.svg',
-  'scalable/es.neikon.dns_tester-provider-gcore.svg',
   'scalable/es.neikon.dns_tester-provider-google.svg',
   'scalable/es.neikon.dns_tester-provider-mullvad.svg',
   'scalable/es.neikon.dns_tester-provider-nextdns.svg',
@@ -20,4 +17,17 @@ install_data(
 install_data(
   '128x128/es.neikon.dns_tester-provider-controld.png',
   install_dir: get_option('datadir') / 'icons' / 'hicolor' / '128x128' / 'apps'
+)
+
+install_data(
+  '128x128/es.neikon.dns_tester-provider-dns4eu.png',
+  install_dir: get_option('datadir') / 'icons' / 'hicolor' / '128x128' / 'apps'
+)
+
+install_data(
+  [
+    '192x192/es.neikon.dns_tester-provider-flashstart.png',
+    '192x192/es.neikon.dns_tester-provider-gcore.png',
+  ],
+  install_dir: get_option('datadir') / 'icons' / 'hicolor' / '192x192' / 'apps'
 )
