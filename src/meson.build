@@ -34,6 +34,7 @@ dns_tester_sources = [
   'dns_store.py',
   'dns_groups.py',
   'region_info.py',
+  'provider_icons.py',
   'aux.py',
   'benchmark.py',
   'window.py',

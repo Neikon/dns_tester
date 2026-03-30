@@ -8,6 +8,15 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 
 ### Changed
 - Updated the README screenshot to the current provider-browser UI and removed the outdated image asset.
+- Added bundled provider icons to the sidebar while keeping a generic fallback icon for user-defined DNS providers.
+- Replaced the placeholder ControlD sidebar icon with the favicon published on the ControlD website.
+- Removed an unused provider icon subdirectory left behind during the sidebar icon work.
+- Moved bundled provider logo source files into a dedicated `data/provider-icons` directory so they stay separate from the app's own icons.
+- Removed the obsolete duplicate provider icon files from `data/icons` so the sidebar uses the new dedicated provider icon asset set only.
+- Replaced the placeholder DNS4EU, FlashStart, Gcore, and Mullvad sidebar icons with the favicons published by their websites.
+- Simplified provider icon selection so icon names are derived from the provider label instead of a repetitive manual map.
+- Replaced the placeholder Google and Cloudflare sidebar icons with the favicons published by their websites.
+- Replaced the placeholder NextDNS sidebar icon with the favicon published by its website and refreshed the AdGuard asset from the official AdGuard DNS favicon.
 
 ## [26.03.30.1745] - 2026-03-30
 
