@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 ## [Unreleased]
 
 ### Changed
+- Expanded the bundled Mullvad catalog to include all published encrypted DNS profiles across DoT and DoH, without exposing misleading Do53 entries.
 - Replaced the placeholder Quad9 sidebar icon with the favicon published by the Quad9 website.
 - Expanded the bundled Quad9 catalog to ship its recommended Malware Blocking + DNSSEC profile across Do53, DoT, and DoH.
 - Expanded the bundled AdGuard catalog to include the official Default, Non-filtering, and Family Protection profiles across Do53, DoT, and DoH.
