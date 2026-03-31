@@ -33,6 +33,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 ### Fixed
 - Converted the Comodo favicon into a PNG asset so the provider icon works in GTK icon themes that do not resolve `.ico` files reliably.
 - Replaced the oversized horizontal Comodo logo with the published site favicon so the provider icon reads better in the sidebar.
+- Regenerated the OpenDNS sidebar PNG directly from the published `favicon.ico` so the icon keeps the original square favicon design.
 - Replaced the OpenDNS `.ico` sidebar asset with the published PNG logo so the provider icon renders correctly in GTK's themed icon lookup.
 - Escaped dynamic libadwaita row titles and subtitles so profile names like `Ads & Tracking` no longer trigger GTK markup parsing warnings.
 
