@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 ## [Unreleased]
 
 ### Changed
+- Added DNS.WATCH as a bundled uncensored public resolver over Do53.
 - Added Neustar UltraDNS as a bundled provider with published public Do53 profiles for reliability, threat protection, family filtering, and business filtering.
 - Added CleanBrowsing as a bundled provider with Family, Adult, and Security filters across Do53, DoT, and DoH, plus its published favicon for the provider sidebar.
 - Added Comodo Secure DNS as a bundled malware-protection resolver over Do53 and bundled its published logo for the provider sidebar.

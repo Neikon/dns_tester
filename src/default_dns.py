@@ -744,6 +744,16 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
         "doh_method": "POST",
     },
     {
+        "id": "dnswatch-default-do53",
+        "provider_name": "DNS.WATCH",
+        "profile_name": "Default",
+        "regions": ["EU"],
+        "target": "84.200.69.80",
+        "transport": "Do53",
+        "tls_hostname": None,
+        "doh_method": "POST",
+    },
+    {
         "id": "flashstart-default",
         "provider_name": "FlashStart",
         "profile_name": "Default",
