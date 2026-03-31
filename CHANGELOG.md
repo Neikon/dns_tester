@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 ## [Unreleased]
 
 ### Changed
+- Added OpenDNS as a bundled resolver with Home and FamilyShield defaults over Do53 and DoH, plus its published favicon in the provider sidebar.
 - Added Applied Privacy as a bundled encrypted-only resolver with public DoT and DoH defaults, plus its published favicon in the provider sidebar.
 - Expanded the bundled NextDNS catalog so the public default resolver is available through Do53, DoT, and DoH.
 - Expanded the bundled Control D catalog with the published Unfiltered, Ads & Tracking, Family Friendly, and OISD Full profiles across Do53, DoT, and DoH.

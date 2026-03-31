@@ -18,6 +18,7 @@ _KNOWN_PROVIDER_ICON_SLUGS = {
     "google",
     "mullvad",
     "nextdns",
+    "opendns",
     "quad9",
 }
 
