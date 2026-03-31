@@ -58,8 +58,8 @@
   </screenshots>
 
   <releases>
-    <release version="26.03.31.1852" date="2026-03-31">
-      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.31.1852</url>
+    <release version="26.03.31.1857" date="2026-03-31">
+      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.31.1857</url>
       <description translate="no">
         <p>This release modernizes DNS benchmarking and improves resolver management.</p>
         <ul>
@@ -101,6 +101,7 @@
           <li>Expand the bundled NextDNS defaults so the public default resolver can be benchmarked over Do53, DoT, and DoH.</li>
           <li>Add Applied Privacy as a bundled encrypted-only resolver using its public DoT and DoH endpoints and its published favicon.</li>
           <li>Add OpenDNS Home and FamilyShield as bundled resolver defaults over Do53 and DoH, using the published OpenDNS favicon in the sidebar.</li>
+          <li>Replace the OpenDNS sidebar icon asset with a published PNG logo so it renders correctly in GTK icon themes.</li>
           <li>Fix profile titles with ampersands so the provider browser no longer emits GTK markup warnings for names like Ads &amp; Tracking.</li>
           <li>Raise the Flatpak runtime to GNOME 50 so the new sidebar widgets are available in the shipped app.</li>
           <li>Integrate the new sidebar layout more cleanly and move the Check All action into a fixed footer at the bottom of the provider list.</li>
