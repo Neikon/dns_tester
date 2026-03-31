@@ -31,9 +31,8 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Replaced the placeholder NextDNS sidebar icon with the favicon published by its website and refreshed the AdGuard asset from the official AdGuard DNS favicon.
 
 ### Fixed
+- Replaced the oversized horizontal Comodo logo with the published site favicon so the provider icon reads better in the sidebar.
 - Replaced the OpenDNS `.ico` sidebar asset with the published PNG logo so the provider icon renders correctly in GTK's themed icon lookup.
-
-### Fixed
 - Escaped dynamic libadwaita row titles and subtitles so profile names like `Ads & Tracking` no longer trigger GTK markup parsing warnings.
 
 ## [26.03.30.1745] - 2026-03-30
