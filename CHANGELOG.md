@@ -26,6 +26,9 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Replaced the placeholder Google and Cloudflare sidebar icons with the favicons published by their websites.
 - Replaced the placeholder NextDNS sidebar icon with the favicon published by its website and refreshed the AdGuard asset from the official AdGuard DNS favicon.
 
+### Fixed
+- Escaped dynamic libadwaita row titles and subtitles so profile names like `Ads & Tracking` no longer trigger GTK markup parsing warnings.
+
 ## [26.03.30.1745] - 2026-03-30
 
 ### Added
