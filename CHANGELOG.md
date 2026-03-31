@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 ## [Unreleased]
 
 ### Changed
+- Added CleanBrowsing as a bundled provider with Family, Adult, and Security filters across Do53, DoT, and DoH, plus its published favicon for the provider sidebar.
 - Added Comodo Secure DNS as a bundled malware-protection resolver over Do53 and bundled its published logo for the provider sidebar.
 - Added OpenDNS as a bundled resolver with Home and FamilyShield defaults over Do53 and DoH, plus its published favicon in the provider sidebar.
 - Added Applied Privacy as a bundled encrypted-only resolver with public DoT and DoH defaults, plus its published favicon in the provider sidebar.
