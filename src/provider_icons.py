@@ -9,6 +9,7 @@ from __future__ import annotations
 _PROVIDER_ICON_PREFIX = "es.neikon.dns_tester-provider-"
 _KNOWN_PROVIDER_ICON_SLUGS = {
     "adguard",
+    "appliedprivacy",
     "cloudflare",
     "controld",
     "dns4eu",
