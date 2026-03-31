@@ -43,6 +43,7 @@ install_data(
     '32x32/es.neikon.dns_tester-provider-comodosecuredns.png',
     '32x32/es.neikon.dns_tester-provider-google.png',
     '32x32/es.neikon.dns_tester-provider-opendns.png',
+    '32x32/es.neikon.dns_tester-provider-uncensoreddns.png',
   ],
   install_dir: get_option('datadir') / 'icons' / 'hicolor' / '32x32' / 'apps'
 )

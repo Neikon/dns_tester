@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 
 ### Changed
 - Added UncensoredDNS as a bundled provider with published anycast and unicast profiles across Do53, DoT, and DoH.
+- Added the published UncensoredDNS favicon to the provider sidebar icon set.
 - Added CleanBrowsing as a bundled provider with Family, Adult, and Security filters across Do53, DoT, and DoH, plus its published favicon for the provider sidebar.
 - Added Comodo Secure DNS as a bundled malware-protection resolver over Do53 and bundled its published logo for the provider sidebar.
 - Added OpenDNS as a bundled resolver with Home and FamilyShield defaults over Do53 and DoH, plus its published favicon in the provider sidebar.

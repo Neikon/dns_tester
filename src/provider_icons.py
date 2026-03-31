@@ -22,6 +22,7 @@ _KNOWN_PROVIDER_ICON_SLUGS = {
     "nextdns",
     "opendns",
     "quad9",
+    "uncensoreddns",
 }
 
 # Unknown or user-defined providers keep a generic network glyph in the sidebar.
