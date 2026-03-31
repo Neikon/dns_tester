@@ -39,7 +39,7 @@ install_data(
 install_data(
   [
     '32x32/es.neikon.dns_tester-provider-appliedprivacy.png',
-    '32x32/es.neikon.dns_tester-provider-comodosecuredns.ico',
+    '32x32/es.neikon.dns_tester-provider-comodosecuredns.png',
     '32x32/es.neikon.dns_tester-provider-google.png',
     '32x32/es.neikon.dns_tester-provider-opendns.png',
   ],
