@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 ## [Unreleased]
 
 ### Changed
+- Expanded the bundled NextDNS catalog so the public default resolver is available through Do53, DoT, and DoH.
 - Expanded the bundled Control D catalog with the published Unfiltered, Ads & Tracking, Family Friendly, and OISD Full profiles across Do53, DoT, and DoH.
 - Expanded the bundled Cloudflare catalog to include the Families malware-only and malware-plus-adult-content profiles across Do53, DoT, and DoH.
 - Expanded the bundled Google Public DNS catalog so the default resolver is available through Do53, DoT, and DoH.
