@@ -354,6 +354,16 @@ DEFAULT_DNS: list[DefaultDnsEntry] = [
         "doh_method": "POST",
     },
     {
+        "id": "comodo-default-do53",
+        "provider_name": "Comodo Secure DNS",
+        "profile_name": "Default",
+        "regions": ["US"],
+        "target": "8.26.56.26",
+        "transport": "Do53",
+        "tls_hostname": None,
+        "doh_method": "POST",
+    },
+    {
         "id": "controld-unfiltered-do53",
         "provider_name": "ControlD",
         "profile_name": "Unfiltered",

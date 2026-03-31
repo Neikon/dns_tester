@@ -30,7 +30,10 @@ install_data(
 )
 
 install_data(
-  '48x48/es.neikon.dns_tester-provider-cloudflare.png',
+  [
+    '48x48/es.neikon.dns_tester-provider-cloudflare.png',
+    '48x48/es.neikon.dns_tester-provider-comodo.png',
+  ],
   install_dir: get_option('datadir') / 'icons' / 'hicolor' / '48x48' / 'apps'
 )
 

@@ -11,6 +11,7 @@ _KNOWN_PROVIDER_ICON_SLUGS = {
     "adguard",
     "appliedprivacy",
     "cloudflare",
+    "comodosecuredns",
     "controld",
     "dns4eu",
     "flashstart",
