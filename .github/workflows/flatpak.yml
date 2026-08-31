@@ -17,6 +17,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder xvfb
 
+      - name: Add Flathub remote
+        run: |
+          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
