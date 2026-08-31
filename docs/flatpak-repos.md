@@ -231,7 +231,7 @@ No `if:` condition — needed for both `develop` and `main` (used for pre-releas
 
 The tag is the app version (e.g. `26.08.31.1536`), which is bumped on every commit per project policy.
 
-### 3.8 Deploy to GitHub Pages
+### 3.8 Deploy to GitHub Pages (OSTree repos)
 
 ```yaml
 - name: Deploy Flatpak repository to GitHub Pages
@@ -245,10 +245,38 @@ The tag is the app version (e.g. `26.08.31.1536`), which is bumped on every comm
     commit_message: "deploy flatpak repo ${{ github.ref == 'refs/heads/main' && 'stable' || 'beta' }} ${{ steps.version.outputs.version || github.sha }}"
 ```
 
-- `publish_branch: gh-pages` — single branch hosting both channels
+- `publish_branch: gh-pages` — single branch hosting both channels. The branch is **required** for OSTree (HTTP server needs persistent `objects`/`summary`), but it is **fully managed by the workflow** — no manual `gh-pages` commits are needed after the initial setup.
 - `destination_dir: beta` or `stable` — keeps repositories isolated
-- `keep_files: true` — prevents one channel's deploy from deleting the other
+- `keep_files: true` — prevents one channel's deploy from deleting the other and preserves the root landing page
 - First deploy creates `gh-pages` automatically; subsequent deploys push incremental commits with the full OSTree objects.
+
+### 3.9 Landing Page (integrated, no manual branch)
+
+The root `https://<user>.github.io/<repo>/` was previously `404` (only `beta/` and `stable/` existed). The workflow now **generates the landing page itself**, so no permanent manual `gh-pages` maintenance is required:
+
+```yaml
+- name: Generate landing page for gh-pages root
+  run: |
+    mkdir -p landing
+    cat > landing/index.html <<'HTML'
+    <!DOCTYPE html>
+    <html lang="es">... <!-- cards for beta/stable, copy buttons, --user notes --> </html>
+    HTML
+
+- name: Deploy landing page to GitHub Pages root
+  uses: peaceiris/actions-gh-pages@v4
+  with:
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+    publish_branch: gh-pages
+    publish_dir: landing
+    destination_dir: .
+    keep_files: true
+    commit_message: "deploy landing page ${{ steps.version.outputs.version || github.sha }}"
+```
+
+- `landing/index.html` is an Adwaita-inspired page (gradient header, two cards `🧪 Beta` / `✅ Stable`, repo URLs, `flatpak --user` instructions, and links to `.flatpakrepo`/`.flatpak`). It lives **only** in the workflow (not in `develop`/`main` history) — previously it was pushed manually to `gh-pages` as `14cf2ef`, now it is recreated on every run.
+- Because `keep_files: true`, the landing deployment does **not** delete `beta/`/`stable` objects; conversely, the OSTree deployment does not delete `index.html`.
+- Alternative of using `docs/` folder or `actions/deploy-pages` without a branch was considered, but `gh-pages` branch remains the simplest persistent store for OSTree. The goal `que todo esté integrado en el mismo flujo` is achieved: a single workflow manages **bundle + OSTree repo + landing** without external manual steps.
 
 ## 4. Enabling GitHub Pages
 
@@ -294,13 +322,15 @@ If you skip this step, the API `GET /repos/<user>/<repo>/pages` returns `404` an
 4. Push a commit to `develop` — workflow will create `gh-pages/beta/` and a pre-release. Merge `develop` → `main` to populate `gh-pages/stable/`.
 5. Enable Pages as in section 4.
 
-## 7. Current State (DNS Tester) — verified 2026-08-31
+## 7. Current State (DNS Tester) — verified 2026-08-31 16:25
 
 - Workflow: `.github/workflows/flatpak.yml` — signed repos with GPG `C54B2799388C8DC49EC61979` (`DNS Tester Flatpak <flatpak@neikon.es>`, RSA 2048)
 - Latest verified runs:
-  - `26.08.31.1602` → `https://github.com/Neikon/dns_tester/releases/tag/26.08.31.1602` (pre-release, beta, signed) + merge to `main` as `73acf22`
-  - `gh-pages:beta` → `93e0f09` (`26.08.31.1548`) and `05c1c17` (`26.08.31.1554`) — verified `GET /beta/dns_tester.flatpakrepo` `200` with `GPGKey=mQENB...`, `summary` + `summary.sig` present
+  - `26.08.31.1625` → latest `develop` with integrated landing page generation (`9b3d008`)
+  - `26.08.31.1612` → `https://github.com/Neikon/dns_tester/releases/tag/26.08.31.1612` (pre-release, beta, signed) + merge to `main` as `e1f1ad5` (`main` stable repo `ca58bb3` already verified)
+  - `gh-pages:beta` → `93e0f09` + `05c1c17` — verified `GET /beta/dns_tester.flatpakrepo` `200` with `GPGKey=mQENB...`, `summary` + `summary.sig` present
   - `gh-pages:stable` → `ca58bb3` (`26.08.31.1602` on `main`) — verified `GET /stable/dns_tester.flatpakrepo` `200` (was `404` before first `main` merge), `summary` + `summary.sig` present
+  - `gh-pages:/` → `14cf2ef` landing page, now **integrated** into workflow as `landing/index.html` (generated each run, deployed to `destination_dir: .` with `keep_files: true`), no manual branch needed
 - Installation verified on Silverblue (`/var/home/neikon`):
   ```bash
   flatpak remote-add --if-not-exists dns_tester-beta https://neikon.github.io/dns_tester/beta/dns_tester.flatpakrepo
@@ -309,6 +339,7 @@ If you skip this step, the API `GET /repos/<user>/<repo>/pages` returns `404` an
   flatpak --user install dns_tester-beta es.neikon.dns_tester
   # → 2.6 MB / 2.5 MB — Instalación completada.
   ```
-  Beta and stable now both install with `flatpak --user` (signed, no `--no-gpg-verify` needed).
+  Beta and stable now both install with `flatpak --user` (signed, no `--no-gpg-verify` needed). Landing at `https://neikon.github.io/dns_tester/` shows beta/stable cards.
 - Versioning: `YY.MM.DD.hhmm` bumped on every commit, synchronized across `meson.build`, `src/main.py`, `data/*.metainfo.xml.in`
 - GPG secrets: `FLATPAK_GPG_PRIVATE_KEY`, `FLATPAK_GPG_KEY_ID`, `FLATPAK_GPG_PUBLIC_B64` in GitHub repo settings (Actions secrets)
+- Branch `gh-pages` is now fully managed: initial manual `index.html` (`14cf2ef`) has been replaced by workflow-generated landing, no permanent manual maintenance required (`que todo esté integrado en el mismo flujo`).
