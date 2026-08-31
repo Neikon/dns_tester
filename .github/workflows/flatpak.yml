@@ -7,6 +7,9 @@ on:
     branches: [main, develop]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   flatpak:
     name: Build Flatpak bundle
@@ -58,3 +61,15 @@ jobs:
           name: dns_tester-flatpak
           path: dns_tester.flatpak
           if-no-files-found: error
+
+      - name: Publish pre-release on develop
+        if: github.ref == 'refs/heads/develop'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: pre-${{ github.sha }}
+          name: Pre-release ${{ github.sha }}
+          prerelease: true
+          generate_release_notes: true
+          files: dns_tester.flatpak
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
