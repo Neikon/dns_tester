@@ -7,10 +7,10 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 ## [Unreleased]
 
 ### Added
-- Added automated Flatpak bundle build via GitHub Actions on every push to `main` and `develop`.
-- Publish Flatpak bundle as GitHub pre-release on every push to `develop` using the app version as tag and release name.
-- Added Flatpak OSTree repositories for beta (`develop`) and stable (`main`) published to GitHub Pages with `flatpak remote-add` support.
-- Added replication guide for Flatpak repositories at `docs/flatpak-repos.md` so other projects or agents can recreate the beta/stable OSTree setup.
+- Added automated Flatpak bundle build via GitHub Actions on every push to `main` and `develop` with Flathub runtime GNOME 50, manifest patching to `dir` source, and multi-stage caching.
+- Publish Flatpak bundle as GitHub pre-release on every push to `develop` using the app version from `meson.build` as tag and release name with auto-generated release notes.
+- Added signed Flatpak OSTree repositories for beta (`develop`) and stable (`main`) published to GitHub Pages (`gh-pages/beta` and `gh-pages/stable`) with GPG signing (RSA 2048, `DNS Tester Flatpak <flatpak@neikon.es>`) and `flatpak remote-add` support via `dns_tester.flatpakrepo`.
+- Added replication guide at `docs/flatpak-repos.md` covering dual-repo setup, GPG secrets (`FLATPAK_GPG_PRIVATE_KEY`, `FLATPAK_GPG_KEY_ID`, `FLATPAK_GPG_PUBLIC_B64`), Pages enablement, and `beta`/`stable` branching for other projects or agents.
 
 ### Changed
 - Added UncensoredDNS as a bundled provider with published anycast and unicast profiles across Do53, DoT, and DoH.
@@ -41,7 +41,8 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Updated the devcontainer to Fedora 44 with an image-based setup and array-form package install to fix Zed quoting issues.
 
 ### Fixed
-- Fixed Flatpak repository GPG error by removing empty `GPGKey` and documenting `--no-gpg-verify` for the unsigned beta/stable OSTree repos.
+- Fixed Flatpak build pipeline failures: removed invalid `ghcr.io/flathub-infra` container, installed `flatpak-builder` via `apt`, added Flathub remote with pre-installed `org.gnome.Platform`/`Sdk` 50, and corrected provider icon validation (AdGuard SVG `256x208` → `256x256`, DNS4EU `1500x1500` → `128x128`).
+- Fixed Flatpak repository GPG verification by generating a persistent RSA 2048 signing key, storing it as GitHub secrets, signing OSTree commits (`summary.sig`) with `gpg-sign`, and embedding the base64 public key (`GPGKey=`) in `dns_tester.flatpakrepo`; verified `beta` and `stable` remotes install correctly (system requires `sudo`, Silverblue uses `flatpak --user`).
 - Converted the Comodo favicon into a PNG asset so the provider icon works in GTK icon themes that do not resolve `.ico` files reliably.
 - Replaced the oversized horizontal Comodo logo with the published site favicon so the provider icon reads better in the sidebar.
 - Regenerated the OpenDNS sidebar PNG directly from the published `favicon.ico` so the icon keeps the original square favicon design.
