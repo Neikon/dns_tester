@@ -54,6 +54,50 @@ jobs:
           repository-url: https://flathub.org/repo/flathub.flatpakrepo
           # Keep build inside actions cache
           cache: true
+          branch: ${{ github.ref == 'refs/heads/main' && 'stable' || 'beta' }}
+
+      - name: Generate Flatpak repository metadata
+        run: |
+          # Create flatpakrepo file for the current channel
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            CHANNEL="stable"
+            TITLE="DNS Tester Stable"
+            COMMENT="DNS Tester stable channel (main)"
+            GIT_BRANCH="main"
+          else
+            CHANNEL="beta"
+            TITLE="DNS Tester Beta"
+            COMMENT="DNS Tester beta channel (develop)"
+            GIT_BRANCH="develop"
+          fi
+          REPO_URL="https://neikon.github.io/dns_tester/${CHANNEL}/"
+          echo "Channel: $CHANNEL, URL: $REPO_URL"
+          # Generate dns_tester.flatpakrepo inside repo dir
+          cat > repo/dns_tester.flatpakrepo <<EOF
+          [Flatpak Repo]
+          Title=${TITLE}
+          Url=${REPO_URL}
+          Homepage=https://github.com/Neikon/dns_tester
+          Comment=${COMMENT}
+          Icon=https://raw.githubusercontent.com/Neikon/dns_tester/${GIT_BRANCH}/data/icons/hicolor/scalable/apps/es.neikon.dns_tester.svg
+          GPGKey=
+          EOF
+          cat repo/dns_tester.flatpakrepo
+          # Generate simple index.html for GitHub Pages
+          cat > repo/index.html <<EOF
+          <!DOCTYPE html>
+          <html><head><meta charset="utf-8"><title>${TITLE} Flatpak Repository</title></head>
+          <body><h1>${TITLE} Flatpak Repository</h1>
+          <p>URL: <code>${REPO_URL}</code></p>
+          <p>Add remote:</p>
+          <pre>flatpak remote-add --if-not-exists dns_tester-${CHANNEL} ${REPO_URL}dns_tester.flatpakrepo
+          flatpak install dns_tester-${CHANNEL} es.neikon.dns_tester</pre>
+          <p><a href="dns_tester.flatpakrepo">dns_tester.flatpakrepo</a> | <a href="dns_tester.flatpak">dns_tester.flatpak (single bundle)</a></p>
+          </body></html>
+          EOF
+          # Copy bundle into repo for direct download
+          cp dns_tester.flatpak repo/ || true
+          ls -lh repo/
 
       - name: Upload Flatpak bundle artifact
         uses: actions/upload-artifact@v4
@@ -63,7 +107,6 @@ jobs:
           if-no-files-found: error
 
       - name: Extract app version
-        if: github.ref == 'refs/heads/develop'
         id: version
         run: |
           # Extract version from meson.build (project version field)
@@ -82,3 +125,13 @@ jobs:
           files: dns_tester.flatpak
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy Flatpak repository to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: repo
+          destination_dir: ${{ github.ref == 'refs/heads/main' && 'stable' || 'beta' }}
+          keep_files: true
+          commit_message: "deploy flatpak repo ${{ github.ref == 'refs/heads/main' && 'stable' || 'beta' }} ${{ steps.version.outputs.version || github.sha }}"
