@@ -41,6 +41,7 @@ from .dns_groups import provider_sidebar_summary
 from .dns_groups import variant_display_name
 from .dns_store import DnsEntry
 from .dns_store import DnsStateStore
+from .provider_icons import get_provider_icon_name
 from .region_info import format_region_summary
 
 # Supported resolver transports exposed in the add-entry dialog.
@@ -128,8 +129,9 @@ class DnsTesterWindow(Adw.ApplicationWindow):
                 provider_group.provider_name,
                 provider_group.provider_name,
             )
-            provider_item = Adw.SidebarItem.new(provider_group.provider_name)
-            provider_item.set_subtitle(self._provider_summary_line(provider_group))
+            provider_item = Adw.SidebarItem.new(self._escape_adw_text(provider_group.provider_name))
+            provider_item.set_icon_name(get_provider_icon_name(provider_group.provider_name))
+            provider_item.set_subtitle(self._escape_adw_text(self._provider_summary_line(provider_group)))
             provider_item.set_tooltip(provider_group.provider_name)
             # Providers that include user-defined profiles belong to the custom section.
             if provider_has_custom_entries(provider_group):
@@ -312,6 +314,10 @@ class DnsTesterWindow(Adw.ApplicationWindow):
     def _provider_summary_line(self, provider_group: DnsProviderGroup) -> str:
         """Build the compact provider metadata shown in the sidebar and detail header."""
         return provider_sidebar_summary(provider_group)
+
+    def _escape_adw_text(self, text: str) -> str:
+        """Escape dynamic text before handing it to libadwaita rows that parse markup."""
+        return GLib.markup_escape_text(text)
 
     def _build_provider_panel(self, provider_group: DnsProviderGroup) -> Gtk.Box:
         """Create the detail panel for one provider with its profiles and transports."""
@@ -840,8 +846,8 @@ class DnsTesterWindow(Adw.ApplicationWindow):
     def _add_group_row(self, group: DnsProfileGroup, parent_list_box: Gtk.ListBox) -> None:
         """Create one profile card inside the selected provider panel."""
         group_row = Adw.ExpanderRow(
-            title=group.profile_name,
-            subtitle=self._group_subtitle(group),
+            title=self._escape_adw_text(group.profile_name),
+            subtitle=self._escape_adw_text(self._group_subtitle(group)),
             activatable=False,
             selectable=False,
         )
@@ -851,7 +857,7 @@ class DnsTesterWindow(Adw.ApplicationWindow):
 
         profile_row = Adw.ActionRow(
             title="Profile",
-            subtitle=group.profile_name,
+            subtitle=self._escape_adw_text(group.profile_name),
             activatable=False,
             selectable=False,
         )

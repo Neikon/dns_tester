@@ -27,6 +27,7 @@
               <object class="AdwToolbarView">
                 <child type="top">
                   <object class="AdwHeaderBar">
+                    <property name="show-title">False</property>
                     <child type="start">
                       <!-- Button to add new DNS entries from Python logic. -->
                       <object class="GtkButton" id="add_button">
@@ -74,7 +75,9 @@
             <property name="child">
               <object class="AdwToolbarView">
                 <child type="top">
-                  <object class="AdwHeaderBar"/>
+                  <object class="AdwHeaderBar">
+                    <property name="show-title">False</property>
+                  </object>
                 </child>
                 <property name="content">
                   <object class="AdwViewStack" id="provider_stack">
