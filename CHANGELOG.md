@@ -8,7 +8,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 
 ### Added
 - Added automated Flatpak bundle build via GitHub Actions on every push to `main` and `develop`.
-- Publish Flatpak bundle as GitHub pre-release on every push to `develop`.
+- Publish Flatpak bundle as GitHub pre-release on every push to `develop` using the app version as tag and release name.
 
 ### Changed
 - Added UncensoredDNS as a bundled provider with published anycast and unicast profiles across Do53, DoT, and DoH.

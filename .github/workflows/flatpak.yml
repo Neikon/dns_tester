@@ -62,12 +62,21 @@ jobs:
           path: dns_tester.flatpak
           if-no-files-found: error
 
+      - name: Extract app version
+        if: github.ref == 'refs/heads/develop'
+        id: version
+        run: |
+          # Extract version from meson.build (project version field)
+          VERSION=$(python3 -c "import re; print(re.search(r\"version:\s*'([^']+)'\", open('meson.build').read()).group(1))")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "App version: $VERSION"
+
       - name: Publish pre-release on develop
         if: github.ref == 'refs/heads/develop'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: pre-${{ github.sha }}
-          name: Pre-release ${{ github.sha }}
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
           prerelease: true
           generate_release_notes: true
           files: dns_tester.flatpak
