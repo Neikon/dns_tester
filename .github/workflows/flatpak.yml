@@ -11,10 +11,6 @@ jobs:
   flatpak:
     name: Build Flatpak bundle
     runs-on: ubuntu-latest
-    # Use container with flatpak-builder available to avoid manual setup
-    container:
-      image: ghcr.io/flathub-infra/flatpak-github-actions:fedora-latest
-      options: --privileged
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
