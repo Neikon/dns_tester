@@ -115,13 +115,18 @@ jobs:
           ls -lh repo/
           # Generate AppStream branches (appstream/x86_64, appstream2/x86_64) to avoid client update errors
           # flatpak-builder should generate them, but ensure they exist for single-app repos
-          if command -v appstream-compose >/dev/null 2>&1; then
-            echo "Generating AppStream with flatpak build-update-repo..."
-            flatpak build-update-repo --generate-static-deltas --gpg-sign=${{ secrets.FLATPAK_GPG_KEY_ID }} repo || flatpak build-update-repo --generate-static-deltas repo || true
-            ostree refs --repo=repo || true
-            ls -lh repo/refs/heads/ 2>&1 | head -20 || true
-            ls -lh repo/appstream* 2>&1 | head -20 || true
-          fi
+          echo "=== AppStream generation ==="
+          set -x
+          ostree refs --repo=repo || true
+          ls -R repo/refs 2>&1 | head -40 || true
+          echo "Running flatpak build-update-repo with GPG signing..."
+          flatpak build-update-repo --generate-static-deltas --gpg-sign=${{ secrets.FLATPAK_GPG_KEY_ID }} repo; echo "exit code with gpg: $?"
+          flatpak build-update-repo --generate-static-deltas repo; echo "exit code without gpg: $?"
+          ostree refs --repo=repo || true
+          ls -R repo/refs 2>&1 | head -60 || true
+          ls -lh repo/appstream* 2>&1 | head -20 || true
+          cat repo/summary 2>&1 | strings | head -40 || true
+          set +x
 
       - name: Upload Flatpak bundle artifact
         uses: actions/upload-artifact@v4
