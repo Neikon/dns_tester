@@ -58,7 +58,7 @@
   </screenshots>
 
   <releases>
-    <release version="26.08.31.2047" date="2026-08-31">
+    <release version="26.08.31.2109" date="2026-08-31">
       <description translate="no">
         <p>Expand the bundled DNS catalog and polish provider presentation.</p>
         <ul>
