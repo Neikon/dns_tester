@@ -98,11 +98,15 @@ jobs:
           <html><head><meta charset="utf-8"><title>${TITLE} Flatpak Repository</title></head>
           <body><h1>${TITLE} Flatpak Repository</h1>
           <p>URL: <code>${REPO_URL}</code></p>
-          <p>Add remote (signed repo):</p>
+          <p>Add remote (signed repo, use --user if system operation not allowed):</p>
           <pre>flatpak remote-add --if-not-exists dns_tester-${CHANNEL} ${REPO_URL}dns_tester.flatpakrepo
-          flatpak install dns_tester-${CHANNEL} es.neikon.dns_tester</pre>
+          flatpak install dns_tester-${CHANNEL} es.neikon.dns_tester
+          # or per-user on Silverblue/Kinoite:
+          flatpak --user remote-add --if-not-exists dns_tester-${CHANNEL} ${REPO_URL}dns_tester.flatpakrepo
+          flatpak --user install dns_tester-${CHANNEL} es.neikon.dns_tester</pre>
           <p>Alternative direct bundle:</p>
-          <pre>flatpak install --bundle ${REPO_URL}dns_tester.flatpak</pre>
+          <pre>flatpak install --bundle ${REPO_URL}dns_tester.flatpak
+          flatpak --user install --bundle ${REPO_URL}dns_tester.flatpak</pre>
           <p><a href="dns_tester.flatpakrepo">dns_tester.flatpakrepo</a> | <a href="dns_tester.flatpak">dns_tester.flatpak (single bundle)</a></p>
           </body></html>
           EOF

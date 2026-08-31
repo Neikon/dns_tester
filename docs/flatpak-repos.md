@@ -14,15 +14,23 @@ This document describes exactly how the dual Flatpak OSTree repositories (`beta`
   - Deploys to `gh-pages/<channel>/`
   - (For `develop` only) Publishes a GitHub pre-release tagged with the app version
 
-Users install with (signed repositories — no `--no-gpg-verify` needed):
+Users install with (signed repositories — no `--no-gpg-verify` needed). On immutable systems (Silverblue, Kinoite) or without root, add `--user`:
 
 ```bash
+# system-wide (requires sudo/polkit):
 flatpak remote-add --if-not-exists dns_tester-beta https://neikon.github.io/dns_tester/beta/dns_tester.flatpakrepo
 flatpak install dns_tester-beta es.neikon.dns_tester
 
-flatpak remote-add --if-not-exists dns_tester-stable https://neikon.github.io/dns_tester/stable/dns_tester.flatpakrepo
-flatpak install dns_tester-stable es.neikon.dns_tester
+# per-user (no root, recommended on Silverblue):
+flatpak --user remote-add --if-not-exists dns_tester-beta https://neikon.github.io/dns_tester/beta/dns_tester.flatpakrepo
+flatpak --user install dns_tester-beta es.neikon.dns_tester
+
+# stable (available after first merge to main):
+flatpak --user remote-add --if-not-exists dns_tester-stable https://neikon.github.io/dns_tester/stable/dns_tester.flatpakrepo
+flatpak --user install dns_tester-stable es.neikon.dns_tester
 ```
+
+If you see `Flatpak system operation ConfigureRemote not allowed for user`, use `--user` as shown above.
 
 ## 2. Prerequisites
 
