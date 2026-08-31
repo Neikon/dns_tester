@@ -1,0 +1,54 @@
+# Workflow to build Flatpak bundle on every merge/push to main
+# Comments in English as per project conventions
+name: Flatpak
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  flatpak:
+    name: Build Flatpak bundle
+    runs-on: ubuntu-latest
+    # Use container with flatpak-builder available to avoid manual setup
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:fedora-latest
+      options: --privileged
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Patch manifest for CI build
+        # Replace git source with local dir source so flatpak-builder uses the checked-out code
+        run: |
+          # Patch manifest to use type dir / path . for CI; keep original manifest untouched in repo
+          python3 -c "
+          import json, pathlib
+          p = pathlib.Path('es.neikon.dns_tester.json')
+          data = json.loads(p.read_text())
+          for mod in data.get('modules', []):
+              if isinstance(mod, dict) and mod.get('name') == 'dns_tester':
+                  mod['sources'] = [{'type': 'dir', 'path': '.'}]
+          p.write_text(json.dumps(data, indent=4))
+          print(p.read_text())
+          "
+
+      - name: Build Flatpak bundle
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: dns_tester.flatpak
+          manifest-path: es.neikon.dns_tester.json
+          cache-key: flatpak-builder-${{ github.sha }}
+          # Use Flathub to get runtime/sdk
+          repository-name: flathub
+          repository-url: https://flathub.org/repo/flathub.flatpakrepo
+          # Keep build inside actions cache
+          cache: true
+
+      - name: Upload Flatpak bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dns_tester-flatpak
+          path: dns_tester.flatpak
+          if-no-files-found: error

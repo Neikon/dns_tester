@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 
 ## [Unreleased]
 
+### Added
+- Added automated Flatpak bundle build via GitHub Actions on every push to `main` and `develop`.
+
 ### Changed
 - Added UncensoredDNS as a bundled provider with published anycast and unicast profiles across Do53, DoT, and DoH.
 - Added the published UncensoredDNS favicon to the provider sidebar icon set.
