@@ -113,6 +113,15 @@ jobs:
           # Copy bundle into repo for direct download
           cp dns_tester.flatpak repo/ || true
           ls -lh repo/
+          # Generate AppStream branches (appstream/x86_64, appstream2/x86_64) to avoid client update errors
+          # flatpak-builder should generate them, but ensure they exist for single-app repos
+          if command -v appstream-compose >/dev/null 2>&1; then
+            echo "Generating AppStream with flatpak build-update-repo..."
+            flatpak build-update-repo --generate-static-deltas --gpg-sign=${{ secrets.FLATPAK_GPG_KEY_ID }} repo || flatpak build-update-repo --generate-static-deltas repo || true
+            ostree refs --repo=repo || true
+            ls -lh repo/refs/heads/ 2>&1 | head -20 || true
+            ls -lh repo/appstream* 2>&1 | head -20 || true
+          fi
 
       - name: Upload Flatpak bundle artifact
         uses: actions/upload-artifact@v4
