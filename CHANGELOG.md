@@ -41,6 +41,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Updated the devcontainer to Fedora 44 with an image-based setup and array-form package install to fix Zed quoting issues.
 
 ### Fixed
+- Fixed Flatpak repository GPG error by removing empty `GPGKey` and documenting `--no-gpg-verify` for the unsigned beta/stable OSTree repos.
 - Converted the Comodo favicon into a PNG asset so the provider icon works in GTK icon themes that do not resolve `.ico` files reliably.
 - Replaced the oversized horizontal Comodo logo with the published site favicon so the provider icon reads better in the sidebar.
 - Regenerated the OpenDNS sidebar PNG directly from the published `favicon.ico` so the icon keeps the original square favicon design.

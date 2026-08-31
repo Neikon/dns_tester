@@ -132,9 +132,8 @@ The `repo/` directory is the OSTree repository; `dns_tester.flatpak` is the sing
     Url=${REPO_URL}
     Homepage=https://github.com/Neikon/dns_tester
     Comment=${COMMENT}
-    Icon=https://raw.githubusercontent.com/Neikon/dns_tester/${GIT_BRANCH}/data/icons/hicolor/scalable/apps/es.neikon.dns_tester.svg
-    GPGKey=
-    EOF
+          Icon=https://raw.githubusercontent.com/Neikon/dns_tester/${GIT_BRANCH}/data/icons/hicolor/scalable/apps/es.neikon.dns_tester.svg
+          EOF
     cat > repo/index.html <<EOF
     <!DOCTYPE html>
     <html><head><meta charset="utf-8"><title>${TITLE} Flatpak Repository</title></head>
