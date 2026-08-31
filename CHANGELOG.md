@@ -32,6 +32,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Simplified provider icon selection so icon names are derived from the provider label instead of a repetitive manual map.
 - Replaced the placeholder Google and Cloudflare sidebar icons with the favicons published by their websites.
 - Replaced the placeholder NextDNS sidebar icon with the favicon published by its website and refreshed the AdGuard asset from the official AdGuard DNS favicon.
+- Updated the devcontainer to Fedora 44 with an image-based setup and array-form package install to fix Zed quoting issues.
 
 ### Fixed
 - Converted the Comodo favicon into a PNG asset so the provider icon works in GTK icon themes that do not resolve `.ico` files reliably.

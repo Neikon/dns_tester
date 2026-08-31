@@ -58,6 +58,17 @@
   </screenshots>
 
   <releases>
+    <release version="26.08.31.1442" date="2026-08-31">
+      <description translate="no">
+        <p>Expand the bundled DNS catalog and polish provider presentation.</p>
+        <ul>
+          <li>Expand AdGuard, Quad9, Mullvad, DNS4EU, Google, Cloudflare, Control D and NextDNS catalogs with official profiles and transports.</li>
+          <li>Add Applied Privacy, OpenDNS, Comodo, CleanBrowsing and UncensoredDNS as bundled providers with published sidebar icons.</li>
+          <li>Refresh provider sidebar icons from published favicons and simplify icon lookup.</li>
+          <li>Update devcontainer to Fedora 44 and fix provider labels with ampersands.</li>
+        </ul>
+      </description>
+    </release>
     <release version="26.03.31.1905" date="2026-03-31">
       <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.31.1905</url>
       <description translate="no">
