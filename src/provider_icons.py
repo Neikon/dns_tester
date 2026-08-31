@@ -9,7 +9,10 @@ from __future__ import annotations
 _PROVIDER_ICON_PREFIX = "es.neikon.dns_tester-provider-"
 _KNOWN_PROVIDER_ICON_SLUGS = {
     "adguard",
+    "appliedprivacy",
     "cloudflare",
+    "cleanbrowsing",
+    "comodosecuredns",
     "controld",
     "dns4eu",
     "flashstart",
@@ -17,7 +20,9 @@ _KNOWN_PROVIDER_ICON_SLUGS = {
     "google",
     "mullvad",
     "nextdns",
+    "opendns",
     "quad9",
+    "uncensoreddns",
 }
 
 # Unknown or user-defined providers keep a generic network glyph in the sidebar.

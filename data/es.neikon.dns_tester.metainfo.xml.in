@@ -58,8 +58,19 @@
   </screenshots>
 
   <releases>
-    <release version="26.03.30.2049" date="2026-03-30">
-      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.30.2049</url>
+    <release version="26.08.31.1442" date="2026-08-31">
+      <description translate="no">
+        <p>Expand the bundled DNS catalog and polish provider presentation.</p>
+        <ul>
+          <li>Expand AdGuard, Quad9, Mullvad, DNS4EU, Google, Cloudflare, Control D and NextDNS catalogs with official profiles and transports.</li>
+          <li>Add Applied Privacy, OpenDNS, Comodo, CleanBrowsing and UncensoredDNS as bundled providers with published sidebar icons.</li>
+          <li>Refresh provider sidebar icons from published favicons and simplify icon lookup.</li>
+          <li>Update devcontainer to Fedora 44 and fix provider labels with ampersands.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="26.03.31.1905" date="2026-03-31">
+      <url type="details">https://github.com/Neikon/dns_tester/releases/tag/26.03.31.1905</url>
       <description translate="no">
         <p>This release modernizes DNS benchmarking and improves resolver management.</p>
         <ul>
@@ -90,6 +101,21 @@
           <li>Simplify provider icon lookup so icon names are derived from the provider label instead of a repetitive manual map.</li>
           <li>Replace the placeholder Google and Cloudflare sidebar icons with the favicons published by their websites.</li>
           <li>Replace the placeholder NextDNS sidebar icon with the favicon published by its website and refresh the AdGuard asset from the official AdGuard DNS favicon.</li>
+          <li>Replace the placeholder Quad9 sidebar icon with the favicon published by the Quad9 website.</li>
+          <li>Expand the bundled AdGuard defaults to ship the official Default, Non-filtering, and Family Protection profiles for Do53, DoT, and DoH.</li>
+          <li>Expand the bundled Quad9 defaults to ship the recommended Malware Blocking and DNSSEC profile for Do53, DoT, and DoH.</li>
+          <li>Expand the bundled Mullvad defaults to ship all published encrypted DNS profiles for DoT and DoH while leaving classic Do53 out of the catalog.</li>
+          <li>Expand the bundled DNS4EU defaults to ship all five public profiles for Do53, DoT, and DoH and rename the old flat default entry to the official Unfiltered profile.</li>
+          <li>Expand the bundled Google Public DNS defaults so the main resolver can be benchmarked over Do53, DoT, and DoH.</li>
+          <li>Expand the bundled Cloudflare defaults to include the Families malware-only and malware-plus-adult-content profiles for Do53, DoT, and DoH.</li>
+          <li>Expand the bundled Control D defaults to include the published Unfiltered, Ads &amp; Tracking, Family Friendly, and OISD Full profiles for Do53, DoT, and DoH.</li>
+          <li>Expand the bundled NextDNS defaults so the public default resolver can be benchmarked over Do53, DoT, and DoH.</li>
+          <li>Add Applied Privacy as a bundled encrypted-only resolver using its public DoT and DoH endpoints and its published favicon.</li>
+          <li>Add OpenDNS Home and FamilyShield as bundled resolver defaults over Do53 and DoH, using the published OpenDNS favicon in the sidebar.</li>
+          <li>Add Comodo Secure DNS as a bundled malware-protection resolver over Do53, using its published logo in the provider sidebar.</li>
+          <li>Replace the Comodo sidebar icon asset with the published site favicon so it reads better at small icon sizes.</li>
+          <li>Replace the OpenDNS sidebar icon asset with a published PNG logo so it renders correctly in GTK icon themes.</li>
+          <li>Fix profile titles with ampersands so the provider browser no longer emits GTK markup warnings for names like Ads &amp; Tracking.</li>
           <li>Raise the Flatpak runtime to GNOME 50 so the new sidebar widgets are available in the shipped app.</li>
           <li>Integrate the new sidebar layout more cleanly and move the Check All action into a fixed footer at the bottom of the provider list.</li>
         </ul>

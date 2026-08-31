@@ -1,21 +1,49 @@
-// Dev container for DNS Tester targeting Fedora 43 to mirror the expected runtime.
+// Dev container for DNS Tester targeting Fedora 44 to mirror the expected runtime.
 {
-  "name": "DNS Tester (Fedora 43)",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".."
-  },
-  "remoteUser": "vscode",
-  "runArgs": [
-    "--cap-add=SYS_PTRACE",
-    "--security-opt",
-    "seccomp=unconfined"
+  "name": "DNS Tester (Fedora 44)",
+  "image": "registry.fedoraproject.org/fedora:44",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached,Z",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "containerUser": "root",
+  "remoteUser": "root",
+  "updateRemoteUserUID": false,
+  // Install system dependencies required for GTK/libadwaita Python development with Meson.
+  // Use array form to avoid Zed's double `sh -c` quoting bug with `&&` (string form becomes `sh -c "/bin/sh -c dnf ..."` → Missing command).
+  "postCreateCommand": [
+    "dnf",
+    "-y",
+    "install",
+    "--refresh",
+    "git",
+    "bash-completion",
+    "python3",
+    "python3-pip",
+    "python3-setuptools",
+    "python3-wheel",
+    "python3-gobject",
+    "meson",
+    "ninja-build",
+    "pkg-config",
+    "gcc",
+    "gcc-c++",
+    "make",
+    "fish",
+    "gobject-introspection-devel",
+    "gtk4-devel",
+    "libadwaita-devel",
+    "glib2-devel",
+    "cairo-devel",
+    "pango-devel",
+    "desktop-file-utils",
+    "appstream",
+    "dbus-daemon",
+    "which",
+    "findutils"
   ],
-  "postCreateCommand": "echo \"# Container ready for DNS Tester\"",
   "customizations": {
     "vscode": {
       "settings": {
-        "terminal.integrated.shell.linux": "/usr/bin/fish",
+        "terminal.integrated.defaultProfile.linux": "fish",
         "python.defaultInterpreterPath": "/usr/bin/python3"
       },
       "extensions": [

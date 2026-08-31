@@ -7,6 +7,21 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 ## [Unreleased]
 
 ### Changed
+- Added UncensoredDNS as a bundled provider with published anycast and unicast profiles across Do53, DoT, and DoH.
+- Added the published UncensoredDNS favicon to the provider sidebar icon set.
+- Added CleanBrowsing as a bundled provider with Family, Adult, and Security filters across Do53, DoT, and DoH, plus its published favicon for the provider sidebar.
+- Added Comodo Secure DNS as a bundled malware-protection resolver over Do53 and bundled its published logo for the provider sidebar.
+- Added OpenDNS as a bundled resolver with Home and FamilyShield defaults over Do53 and DoH, plus its published favicon in the provider sidebar.
+- Added Applied Privacy as a bundled encrypted-only resolver with public DoT and DoH defaults, plus its published favicon in the provider sidebar.
+- Expanded the bundled NextDNS catalog so the public default resolver is available through Do53, DoT, and DoH.
+- Expanded the bundled Control D catalog with the published Unfiltered, Ads & Tracking, Family Friendly, and OISD Full profiles across Do53, DoT, and DoH.
+- Expanded the bundled Cloudflare catalog to include the Families malware-only and malware-plus-adult-content profiles across Do53, DoT, and DoH.
+- Expanded the bundled Google Public DNS catalog so the default resolver is available through Do53, DoT, and DoH.
+- Expanded the bundled DNS4EU catalog to ship all five public profiles across Do53, DoT, and DoH, and renamed the old flat default entry to the official Unfiltered profile.
+- Expanded the bundled Mullvad catalog to include all published encrypted DNS profiles across DoT and DoH, without exposing misleading Do53 entries.
+- Replaced the placeholder Quad9 sidebar icon with the favicon published by the Quad9 website.
+- Expanded the bundled Quad9 catalog to ship its recommended Malware Blocking + DNSSEC profile across Do53, DoT, and DoH.
+- Expanded the bundled AdGuard catalog to include the official Default, Non-filtering, and Family Protection profiles across Do53, DoT, and DoH.
 - Updated the README screenshot to the current provider-browser UI and removed the outdated image asset.
 - Added bundled provider icons to the sidebar while keeping a generic fallback icon for user-defined DNS providers.
 - Replaced the placeholder ControlD sidebar icon with the favicon published on the ControlD website.
@@ -17,6 +32,14 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Simplified provider icon selection so icon names are derived from the provider label instead of a repetitive manual map.
 - Replaced the placeholder Google and Cloudflare sidebar icons with the favicons published by their websites.
 - Replaced the placeholder NextDNS sidebar icon with the favicon published by its website and refreshed the AdGuard asset from the official AdGuard DNS favicon.
+- Updated the devcontainer to Fedora 44 with an image-based setup and array-form package install to fix Zed quoting issues.
+
+### Fixed
+- Converted the Comodo favicon into a PNG asset so the provider icon works in GTK icon themes that do not resolve `.ico` files reliably.
+- Replaced the oversized horizontal Comodo logo with the published site favicon so the provider icon reads better in the sidebar.
+- Regenerated the OpenDNS sidebar PNG directly from the published `favicon.ico` so the icon keeps the original square favicon design.
+- Replaced the OpenDNS `.ico` sidebar asset with the published PNG logo so the provider icon renders correctly in GTK's themed icon lookup.
+- Escaped dynamic libadwaita row titles and subtitles so profile names like `Ads & Tracking` no longer trigger GTK markup parsing warnings.
 
 ## [26.03.30.1745] - 2026-03-30
 
