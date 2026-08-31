@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNS Tester — Flatpak Repositories</title>
+<meta name="description" content="Repositorios Flatpak oficiales de DNS Tester: beta (develop) y stable (main).">
+<link rel="icon" href="https://raw.githubusercontent.com/Neikon/dns_tester/main/data/icons/hicolor/scalable/apps/es.neikon.dns_tester.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <img class="logo" src="https://raw.githubusercontent.com/Neikon/dns_tester/main/data/icons/hicolor/scalable/apps/es.neikon.dns_tester.svg" alt="DNS Tester logo">
+  <h1>DNS Tester</h1>
+  <p>Repositorios Flatpak oficiales — instala la versión <strong>beta</strong> (develop) para probar lo último o <strong>stable</strong> (main) para producción. Repos firmados con GPG.</p>
+  <div class="hero-actions">
+    <a class="btn" href="https://github.com/Neikon/dns_tester">★ GitHub</a>
+    <a class="btn secondary" href="https://github.com/Neikon/dns_tester/releases">Releases</a>
+  </div>
+</header>
+<div class="wrap">
+  <div class="cards">
+    <section class="card beta">
+      <h2>🧪 Beta <span class="badge">develop</span></h2>
+      <p>Canal de pruebas. Se actualiza en cada push a <code>develop</code>.</p>
+      <div class="repo-url">
+        <code>https://neikon.github.io/dns_tester/beta/</code>
+        <button class="copy" aria-label="Copiar" onclick="copy(this,'https://neikon.github.io/dns_tester/beta/dns_tester.flatpakrepo')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"></rect><path d="M15 9V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"></path></svg>
+        </button>
+      </div>
+      <div class="steps">
+        <h3>Instalación (recomendado --user)</h3>
+        <pre><code>flatpak --user remote-add --if-not-exists dns_tester-beta \
+  https://neikon.github.io/dns_tester/beta/dns_tester.flatpakrepo
+flatpak --user install dns_tester-beta es.neikon.dns_tester</code></pre>
+      </div>
+      <div class="grid-links">
+        <a href="beta/dns_tester.flatpakrepo">📄 flatpakrepo</a>
+        <a href="beta/dns_tester.flatpak">📦 flatpak</a>
+        <a href="beta/">📁 repo</a>
+      </div>
+    </section>
+    <section class="card stable">
+      <h2>✅ Stable <span class="badge">main</span></h2>
+      <p>Canal estable. Se actualiza al mergear a <code>main</code>.</p>
+      <div class="repo-url">
+        <code>https://neikon.github.io/dns_tester/stable/</code>
+        <button class="copy" aria-label="Copiar" onclick="copy(this,'https://neikon.github.io/dns_tester/stable/dns_tester.flatpakrepo')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"></rect><path d="M15 9V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"></path></svg>
+        </button>
+      </div>
+      <div class="steps">
+        <h3>Instalación</h3>
+        <pre><code>flatpak --user remote-add --if-not-exists dns_tester-stable \
+  https://neikon.github.io/dns_tester/stable/dns_tester.flatpakrepo
+flatpak --user install dns_tester-stable es.neikon.dns_tester</code></pre>
+      </div>
+      <div class="grid-links">
+        <a href="stable/dns_tester.flatpakrepo">📄 flatpakrepo</a>
+        <a href="stable/dns_tester.flatpak">📦 flatpak</a>
+        <a href="stable/">📁 repo</a>
+      </div>
+    </section>
+  </div>
+  <div class="note"><strong>¿Error ConfigureRemote not allowed?</strong> Usa <code>--user</code> (Silverblue/Kinoite). Los repos están firmados — no necesitas <code>--no-gpg-verify</code>.</div>
+  <footer>
+    <p>DNS Tester • <a href="https://github.com/Neikon/dns_tester">Neikon/dns_tester</a> • <code>gh-pages</code> (beta/stable) • <a href="https://neikon.github.io/dns_tester/beta/">beta</a> · <a href="https://neikon.github.io/dns_tester/stable/">stable</a></p>
+    <p>Guía: <a href="https://github.com/Neikon/dns_tester/blob/develop/docs/flatpak-repos.md">docs/flatpak-repos.md</a></p>
+  </footer>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
