@@ -11,6 +11,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 - Publish Flatpak bundle as GitHub pre-release on every push to `develop` using the app version from `meson.build` as tag and release name with auto-generated release notes.
 - Added signed Flatpak OSTree repositories for beta (`develop`) and stable (`main`) published to GitHub Pages (`gh-pages/beta` and `gh-pages/stable`) with GPG signing (RSA 2048, `DNS Tester Flatpak <flatpak@neikon.es>`) and `flatpak remote-add` support via `dns_tester.flatpakrepo`.
 - Added replication guide at `docs/flatpak-repos.md` covering dual-repo setup, GPG secrets (`FLATPAK_GPG_PRIVATE_KEY`, `FLATPAK_GPG_KEY_ID`, `FLATPAK_GPG_PUBLIC_B64`), Pages enablement, and `beta`/`stable` branching for other projects or agents.
+- Added landing page at `https://neikon.github.io/dns_tester/` (generated and deployed by the Flatpak workflow to `gh-pages` root) with beta/stable cards, `flatpak --user` instructions, and copy buttons.
 
 ### Changed
 - Added UncensoredDNS as a bundled provider with published anycast and unicast profiles across Do53, DoT, and DoH.
