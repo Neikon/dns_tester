@@ -14,7 +14,7 @@ This document describes exactly how the dual Flatpak OSTree repositories (`beta`
   - Deploys to `gh-pages/<channel>/`
   - (For `develop` only) Publishes a GitHub pre-release tagged with the app version
 
-Users install with:
+Users install with (signed repositories — no `--no-gpg-verify` needed):
 
 ```bash
 flatpak remote-add --if-not-exists dns_tester-beta https://neikon.github.io/dns_tester/beta/dns_tester.flatpakrepo
@@ -54,9 +54,9 @@ permissions:
 
 `contents: write` is required — without it, both `peaceiris/actions-gh-pages` and `softprops/action-gh-release` fail with `403`.
 
-### 3.2 Install Dependencies
+### 3.2 Install Dependencies and Import GPG
 
-Ubuntu runners do **not** ship `flatpak-builder`. Install it and add Flathub:
+Ubuntu runners do **not** ship `flatpak-builder`. Install it, add Flathub, and import the signing key:
 
 ```yaml
 - name: Install Flatpak and flatpak-builder
@@ -68,9 +68,39 @@ Ubuntu runners do **not** ship `flatpak-builder`. Install it and add Flathub:
   run: |
     sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
     sudo flatpak install -y --noninteractive flathub org.gnome.Platform//50 org.gnome.Sdk//50 || true
+
+- name: Import GPG key for Flatpak repo signing
+  run: |
+    echo "${{ secrets.FLATPAK_GPG_PRIVATE_KEY }}" | gpg --batch --import
+    echo "${{ secrets.FLATPAK_GPG_KEY_ID }}:6:" | gpg --import-ownertrust
+    gpg --list-keys
 ```
 
 Pre-installing `Platform` and `Sdk` avoids `Flatpak system operation Deploy not allowed for user` when `flatpak-builder --install-deps-from=flathub` runs as non-root.
+
+The GPG key is a 2048-bit RSA key (`DNS Tester Flatpak <flatpak@neikon.es>`) stored as repository secrets:
+- `FLATPAK_GPG_PRIVATE_KEY` — ASCII-armored private key (`gpg --armor --export-secret-keys`)
+- `FLATPAK_GPG_KEY_ID` — key fingerprint (`C54B2799388C8DC49EC61979...`)
+- `FLATPAK_GPG_PUBLIC_B64` — base64-encoded public key (`gpg --export | base64 -w0`) for `GPGKey=` in the `.flatpakrepo`
+
+Generate once locally:
+
+```bash
+cat > /tmp/genkey <<'EOF'
+%no-protection
+Key-Type: RSA
+Key-Length: 2048
+Name-Real: DNS Tester Flatpak
+Name-Email: flatpak@neikon.es
+Expire-Date: 0
+EOF
+GNUPGHOME=/tmp/gpg gpg --batch --generate-key /tmp/genkey
+gpg --armor --export-secret-keys <ID> > private.asc
+gpg --export <ID> | base64 -w0 > public.b64
+gh secret set FLATPAK_GPG_PRIVATE_KEY < private.asc
+gh secret set FLATPAK_GPG_KEY_ID --body "<ID>"
+gh secret set FLATPAK_GPG_PUBLIC_B64 < public.b64
+```
 
 ### 3.3 Patch Manifest for CI
 
@@ -104,6 +134,7 @@ This replaces any `git`/`file` source with a local `dir` source so the builder u
     repository-url: https://flathub.org/repo/flathub.flatpakrepo
     cache: true
     branch: ${{ github.ref == 'refs/heads/main' && 'stable' || 'beta' }}
+    gpg-sign: ${{ secrets.FLATPAK_GPG_KEY_ID }}
 ```
 
 `branch` sets the OSTree branch inside the repository (`beta` vs `stable`). The action internally runs:
@@ -126,19 +157,22 @@ The `repo/` directory is the OSTree repository; `dns_tester.flatpak` is the sing
       CHANNEL="beta"; TITLE="DNS Tester Beta"; COMMENT="DNS Tester beta channel (develop)"; GIT_BRANCH="develop"
     fi
     REPO_URL="https://neikon.github.io/dns_tester/${CHANNEL}/"
+    GPGKEY=$(echo "${{ secrets.FLATPAK_GPG_PUBLIC_B64 }}" | tr -d '\n')
     cat > repo/dns_tester.flatpakrepo <<EOF
     [Flatpak Repo]
     Title=${TITLE}
     Url=${REPO_URL}
     Homepage=https://github.com/Neikon/dns_tester
     Comment=${COMMENT}
-          Icon=https://raw.githubusercontent.com/Neikon/dns_tester/${GIT_BRANCH}/data/icons/hicolor/scalable/apps/es.neikon.dns_tester.svg
-          EOF
+    Icon=https://raw.githubusercontent.com/Neikon/dns_tester/${GIT_BRANCH}/data/icons/hicolor/scalable/apps/es.neikon.dns_tester.svg
+    GPGKey=${GPGKEY}
+    EOF
     cat > repo/index.html <<EOF
     <!DOCTYPE html>
     <html><head><meta charset="utf-8"><title>${TITLE} Flatpak Repository</title></head>
     <body><h1>${TITLE} Flatpak Repository</h1>
     <p>URL: <code>${REPO_URL}</code></p>
+    <p>Signed repo:</p>
     <pre>flatpak remote-add --if-not-exists dns_tester-${CHANNEL} ${REPO_URL}dns_tester.flatpakrepo
     flatpak install dns_tester-${CHANNEL} es.neikon.dns_tester</pre>
     </body></html>
@@ -149,8 +183,8 @@ The `repo/` directory is the OSTree repository; `dns_tester.flatpak` is the sing
 
 Key points:
 - `Url` **must** end with `/` and point to the GitHub Pages location for that channel.
-- `GPGKey=` empty means unsigned repository (simplest for open-source projects). For signed repos, export a GPG key and set `GPGKey=<base64-encoded-key>`.
-- Copying the bundle into `repo/` allows direct download without OSTree.
+- `GPGKey` is the base64-encoded **public** key (raw, not ASCII-armored) from `gpg --export | base64 -w0`. The OSTree commits are signed with the corresponding private key via `gpg-sign: ${{ secrets.FLATPAK_GPG_KEY_ID }}` — the client validates `summary.sig`/`summary.idx.sig` against this key.
+- Copying the bundle into `repo/` allows direct download without OSTree (`flatpak install --bundle`).
 
 ### 3.6 Extract Version
 
@@ -226,6 +260,9 @@ If you skip this step, the API `GET /repos/<user>/<repo>/pages` returns `404` an
 | `Flatpak system operation Deploy not allowed for user` | Builder runs `flatpak --system install` as unprivileged user | Pre-install with `sudo flatpak install -y ... Platform//50 Sdk//50` |
 | `is not a valid icon: Expected a square icon but got: 256x208` | Scalable SVG not square | Fix SVG to `width=256 height=256 viewBox=0 0 256 256` with centered content |
 | `Image too large (1500x1500). Max. size 512x512` | PNG installed under `128x128` but file is `1500x1500` | Resize PNG to its declared directory size (e.g. `128x128` → `128`) |
+| `Clave GPG no válida` / `GPGKey=` empty | Flatpak validates `GPGKey` as base64; empty fails | Generate signing key, store secrets, add `gpg-sign: ${{ secrets.FLATPAK_GPG_KEY_ID }}` and `GPGKey=${{ secrets.FLATPAK_GPG_PUBLIC_B64 }}` |
+| `No se encontraron referencias remotas` for `beta` | `summary` missing (wrong OSTree branch or unsigned without `--no-gpg-verify`) | Ensure builder `branch:` matches channel (`beta`/`stable`) and use signed repo |
+| `Server returned status 404` for `stable` | No `main` push yet, `gh-pages/stable/` never deployed | Merge `develop` → `main` once to populate stable |
 | `403` on release/gh-pages | Missing `permissions: contents: write` | Add at workflow top level |
 | `404` on Pages API | Pages not enabled | Enable `gh-pages` branch in Settings → Pages |
 
@@ -244,9 +281,10 @@ If you skip this step, the API `GET /repos/<user>/<repo>/pages` returns `404` an
 
 ## 7. Current State (DNS Tester)
 
-- Workflow: `.github/workflows/flatpak.yml` (2026-08-31)
+- Workflow: `.github/workflows/flatpak.yml` (2026-08-31) — signed repos with GPG `C54B2799388C8DC49EC61979...` (`flatpak@neikon.es`)
 - Latest successful runs:
-  - `26.08.31.1530` → `https://github.com/Neikon/dns_tester/releases/tag/26.08.31.1530` (pre-release, beta)
-  - `gh-pages` branch contains `beta/` with OSTree repo + `dns_tester.flatpak` + `dns_tester.flatpakrepo`
-  - `stable/` populated on next `main` push/release
+  - `26.08.31.1554` → `https://github.com/Neikon/dns_tester/releases/tag/26.08.31.1554` (pre-release, beta, signed)
+  - `gh-pages:beta` contains signed OSTree repo (`summary.sig`) + `dns_tester.flatpakrepo` with `GPGKey=mQENB…` and `dns_tester.flatpak`
+  - `gh-pages:stable` populated on next `main` push (signed)
 - Versioning: `YY.MM.DD.hhmm` bumped on every commit, synchronized across `meson.build`, `src/main.py`, `data/*.metainfo.xml.in`
+- GPG secrets: `FLATPAK_GPG_PRIVATE_KEY`, `FLATPAK_GPG_KEY_ID`, `FLATPAK_GPG_PUBLIC_B64` in GitHub repo settings
