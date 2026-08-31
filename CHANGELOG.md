@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog, with the newest entries first.
 ## [Unreleased]
 
 ### Added
+- Added XDP as a bundled provider with AdBlock and Standard profiles across Do53, DoT, and DoH, plus its published favicon for the provider sidebar.
 - Added automated Flatpak bundle build via GitHub Actions on every push to `main` and `develop` with Flathub runtime GNOME 50, manifest patching to `dir` source, and multi-stage caching.
 - Publish Flatpak bundle as GitHub pre-release on every push to `develop` using the app version from `meson.build` as tag and release name with auto-generated release notes.
 - Added signed Flatpak OSTree repositories for beta (`develop`) and stable (`main`) published to GitHub Pages (`gh-pages/beta` and `gh-pages/stable`) with GPG signing (RSA 2048, `DNS Tester Flatpak <flatpak@neikon.es>`) and `flatpak remote-add` support via `dns_tester.flatpakrepo`.
