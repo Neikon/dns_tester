@@ -20,7 +20,8 @@
   .stable .badge{color:#33d17a;border-color:#33d17a;background:rgba(51,209,122,.12)}
   .card p{color:var(--muted);margin:.4rem 0 .9rem;font-size:.95rem}
   .repo-url{font-family:ui-monospace,monospace;font-size:.85rem;background:#0f1419;border:1px solid var(--border);border-radius:8px;padding:.6rem .75rem;word-break:break-all;display:flex;align-items:center;justify-content:space-between;gap:.5rem}
-  .repo-url code{color:#d8e8ff} .copy{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:.35rem .7rem;font-weight:600;cursor:pointer;font-size:.8rem}
+  .repo-url code{color:#d8e8ff} .copy{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:.42rem .55rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:32px;height:30px;flex-shrink:0}
+  .copy:hover{filter:brightness(1.1)} .copy svg{pointer-events:none}
   .steps{margin-top:.9rem} .steps h3{font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 .5rem}
   pre{background:#0f1419;border:1px solid var(--border);border-radius:10px;padding:.9rem;overflow:auto;font-size:.82rem;line-height:1.5;margin:0}
   pre code{color:#cce0ff} .note{background:rgba(98,160,234,.12);border:1px solid rgba(98,160,234,.3);border-radius:10px;padding:.8rem 1rem;font-size:.88rem;margin-top:1rem;color:#d0e4ff}
@@ -43,16 +44,16 @@
 </header>
 <div class="wrap">
   <div class="cards">
-    <section class="card beta"><h2>🧪 Beta <span class="badge">develop</span></h2><p>Canal de pruebas. Se actualiza en cada push a <code>develop</code>.</p><div class="repo-url"><code>https://neikon.github.io/dns_tester/beta/</code> <button class="copy" onclick="copy('https://neikon.github.io/dns_tester/beta/dns_tester.flatpakrepo')">Copiar</button></div><div class="steps"><h3>Instalación (recomendado --user)</h3><pre><code>flatpak --user remote-add --if-not-exists dns_tester-beta \
+    <section class="card beta"><h2>🧪 Beta <span class="badge">develop</span></h2><p>Canal de pruebas. Se actualiza en cada push a <code>develop</code>.</p><div class="repo-url"><code>https://neikon.github.io/dns_tester/beta/</code> <button class="copy" aria-label="Copiar" onclick="copy(this,'https://neikon.github.io/dns_tester/beta/dns_tester.flatpakrepo')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"></rect><path d="M15 9V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"></path></svg></button></div><div class="steps"><h3>Instalación (recomendado --user)</h3><pre><code>flatpak --user remote-add --if-not-exists dns_tester-beta \
   https://neikon.github.io/dns_tester/beta/dns_tester.flatpakrepo
 flatpak --user install dns_tester-beta es.neikon.dns_tester</code></pre></div><div class="grid-links"><a href="beta/dns_tester.flatpakrepo">📄 flatpakrepo</a><a href="beta/dns_tester.flatpak">📦 flatpak</a><a href="beta/">📁 repo</a></div></section>
-    <section class="card stable"><h2>✅ Stable <span class="badge">main</span></h2><p>Canal estable. Se actualiza al mergear a <code>main</code>.</p><div class="repo-url"><code>https://neikon.github.io/dns_tester/stable/</code> <button class="copy" onclick="copy('https://neikon.github.io/dns_tester/stable/dns_tester.flatpakrepo')">Copiar</button></div><div class="steps"><h3>Instalación</h3><pre><code>flatpak --user remote-add --if-not-exists dns_tester-stable \
+    <section class="card stable"><h2>✅ Stable <span class="badge">main</span></h2><p>Canal estable. Se actualiza al mergear a <code>main</code>.</p><div class="repo-url"><code>https://neikon.github.io/dns_tester/stable/</code> <button class="copy" aria-label="Copiar" onclick="copy(this,'https://neikon.github.io/dns_tester/stable/dns_tester.flatpakrepo')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"></rect><path d="M15 9V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"></path></svg></button></div><div class="steps"><h3>Instalación</h3><pre><code>flatpak --user remote-add --if-not-exists dns_tester-stable \
   https://neikon.github.io/dns_tester/stable/dns_tester.flatpakrepo
 flatpak --user install dns_tester-stable es.neikon.dns_tester</code></pre></div><div class="grid-links"><a href="stable/dns_tester.flatpakrepo">📄 flatpakrepo</a><a href="stable/dns_tester.flatpak">📦 flatpak</a><a href="stable/">📁 repo</a></div></section>
   </div>
   <div class="note"><strong>¿Error ConfigureRemote not allowed?</strong> Usa <code>--user</code> (Silverblue/Kinoite). Los repos están firmados — no necesitas <code>--no-gpg-verify</code>.</div>
   <footer><p>DNS Tester • <a href="https://github.com/Neikon/dns_tester">Neikon/dns_tester</a> • <code>gh-pages</code> (beta/stable) • <a href="https://neikon.github.io/dns_tester/beta/">beta</a> · <a href="https://neikon.github.io/dns_tester/stable/">stable</a></p><p>Guía: <a href="https://github.com/Neikon/dns_tester/blob/develop/docs/flatpak-repos.md">docs/flatpak-repos.md</a></p></footer>
 </div>
-<script>function copy(t){navigator.clipboard.writeText(t).then(()=>{const b=event.target;const v=b.textContent;b.textContent='¡Copiado!';setTimeout(()=>b.textContent=v,1500)})}</script>
+<script>function copy(btn,t){navigator.clipboard.writeText(t).then(()=>{const v=btn.innerHTML;btn.innerHTML='✓';setTimeout(()=>btn.innerHTML=v,1500)});}</script>
 </body>
 </html>
