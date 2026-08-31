@@ -168,7 +168,7 @@ jobs:
             header{background:linear-gradient(135deg,#1c71d8 0%,#3584e4 50%,#62a0ea 100%);padding:3rem 1.5rem 2.5rem;text-align:center}
             header h1{margin:0;font-size:2.4rem;font-weight:800} header p{margin:.6rem auto 0;max-width:640px;opacity:.95}
             header .logo{width:84px;height:84px;background:#fff;border-radius:20px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);margin-bottom:1rem}
-            .wrap{max-width:980px;margin:0 auto;padding:2rem 1.25rem 3rem}
+            .wrap{max-width:1000px;margin:0 auto;padding:2rem 1.25rem 3rem}
             .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.25rem;margin-top:-1.2rem}
             .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;box-shadow:0 4px 20px rgba(0,0,0,.2)}
             .card h2{margin:0 0 .25rem;font-size:1.35rem;display:flex;align-items:center;gap:.6rem}
