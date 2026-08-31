@@ -1,0 +1,231 @@
+/* DNS Tester — Landing page styles */
+/* Comments in English as per project conventions */
+
+:root {
+  --bg: #0f1419;
+  --card: #1a2332;
+  --accent: #3584e4;
+  --text: #eeeeec;
+  --muted: #9a9996;
+  --border: #2e3436;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Cantarell, Ubuntu, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+header {
+  background: linear-gradient(135deg, #1c71d8 0%, #3584e4 50%, #62a0ea 100%);
+  padding: 3rem 1.5rem 2.5rem;
+  text-align: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2.4rem;
+  font-weight: 800;
+}
+
+header p {
+  margin: .6rem auto 0;
+  max-width: 640px;
+  opacity: .95;
+}
+
+header .logo {
+  width: 84px;
+  height: 84px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  margin-bottom: 1rem;
+}
+
+.wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.25rem;
+  margin-top: -1.2rem;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,.2);
+}
+
+.card h2 {
+  margin: 0 0 .25rem;
+  font-size: 1.35rem;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+
+.badge {
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: .2rem .55rem;
+  border-radius: 999px;
+  border: 1px solid;
+}
+
+.beta .badge {
+  color: #62a0ea;
+  border-color: #62a0ea;
+  background: rgba(98,160,234,.12);
+}
+
+.stable .badge {
+  color: #33d17a;
+  border-color: #33d17a;
+  background: rgba(51,209,122,.12);
+}
+
+.card p {
+  color: var(--muted);
+  margin: .4rem 0 .9rem;
+  font-size: .95rem;
+}
+
+.repo-url {
+  font-family: ui-monospace, monospace;
+  font-size: .85rem;
+  background: #0f1419;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .6rem .75rem;
+  word-break: break-all;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+.repo-url code { color: #d8e8ff; }
+
+.copy {
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: .42rem .55rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.copy:hover { filter: brightness(1.1); }
+.copy svg { pointer-events: none; }
+
+.steps { margin-top: .9rem; }
+
+.steps h3 {
+  font-size: .9rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  margin: 0 0 .5rem;
+}
+
+pre {
+  background: #0f1419;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: .9rem;
+  overflow: auto;
+  font-size: .82rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+pre code { color: #cce0ff; }
+
+.note {
+  background: rgba(98,160,234,.12);
+  border: 1px solid rgba(98,160,234,.3);
+  border-radius: 10px;
+  padding: .8rem 1rem;
+  font-size: .88rem;
+  margin-top: 1rem;
+  color: #d0e4ff;
+}
+
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: .85rem;
+  padding: 2rem 1rem;
+  border-top: 1px solid var(--border);
+  margin-top: 2rem;
+}
+
+footer a { color: var(--accent); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+.hero-actions {
+  margin-top: 1.2rem;
+  display: flex;
+  gap: .7rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  background: #fff;
+  color: #1c71d8;
+  font-weight: 700;
+  padding: .6rem 1.1rem;
+  border-radius: 999px;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,.2);
+}
+
+.btn.secondary {
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.35);
+  box-shadow: none;
+}
+
+.grid-links {
+  display: flex;
+  gap: .5rem;
+  margin-top: .7rem;
+  flex-wrap: wrap;
+}
+
+.grid-links a {
+  font-size: .8rem;
+  color: var(--muted);
+  text-decoration: none;
+  border: 1px solid var(--border);
+  padding: .3rem .6rem;
+  border-radius: 999px;
+}
+
+.grid-links a:hover { color: var(--text); border-color: var(--accent); }
