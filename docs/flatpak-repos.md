@@ -180,9 +180,15 @@ The `repo/` directory is the OSTree repository; `dns_tester.flatpak` is the sing
     <html><head><meta charset="utf-8"><title>${TITLE} Flatpak Repository</title></head>
     <body><h1>${TITLE} Flatpak Repository</h1>
     <p>URL: <code>${REPO_URL}</code></p>
-    <p>Signed repo:</p>
+    <p>Add remote (signed repo, use --user if system operation not allowed):</p>
     <pre>flatpak remote-add --if-not-exists dns_tester-${CHANNEL} ${REPO_URL}dns_tester.flatpakrepo
-    flatpak install dns_tester-${CHANNEL} es.neikon.dns_tester</pre>
+    flatpak install dns_tester-${CHANNEL} es.neikon.dns_tester
+    # or per-user on Silverblue/Kinoite:
+    flatpak --user remote-add --if-not-exists dns_tester-${CHANNEL} ${REPO_URL}dns_tester.flatpakrepo
+    flatpak --user install dns_tester-${CHANNEL} es.neikon.dns_tester</pre>
+    <p>Alternative direct bundle:</p>
+    <pre>flatpak install --bundle ${REPO_URL}dns_tester.flatpak
+    flatpak --user install --bundle ${REPO_URL}dns_tester.flatpak</pre>
     </body></html>
     EOF
     cp dns_tester.flatpak repo/ || true
@@ -270,7 +276,8 @@ If you skip this step, the API `GET /repos/<user>/<repo>/pages` returns `404` an
 | `Image too large (1500x1500). Max. size 512x512` | PNG installed under `128x128` but file is `1500x1500` | Resize PNG to its declared directory size (e.g. `128x128` → `128`) |
 | `Clave GPG no válida` / `GPGKey=` empty | Flatpak validates `GPGKey` as base64; empty fails | Generate signing key, store secrets, add `gpg-sign: ${{ secrets.FLATPAK_GPG_KEY_ID }}` and `GPGKey=${{ secrets.FLATPAK_GPG_PUBLIC_B64 }}` |
 | `No se encontraron referencias remotas` for `beta` | `summary` missing (wrong OSTree branch or unsigned without `--no-gpg-verify`) | Ensure builder `branch:` matches channel (`beta`/`stable`) and use signed repo |
-| `Server returned status 404` for `stable` | No `main` push yet, `gh-pages/stable/` never deployed | Merge `develop` → `main` once to populate stable |
+| `Server returned status 404` for `stable` | No `main` push yet, `gh-pages/stable/` never deployed | Merge `develop` → `main` once to populate stable (verified fixed in `ca58bb3`) |
+| `Flatpak system operation ConfigureRemote not allowed for user` | System remote requires polkit/root | Use `flatpak --user remote-add ...` and `flatpak --user install ...` (Silverblue/Kinoite) |
 | `403` on release/gh-pages | Missing `permissions: contents: write` | Add at workflow top level |
 | `404` on Pages API | Pages not enabled | Enable `gh-pages` branch in Settings → Pages |
 
@@ -287,12 +294,21 @@ If you skip this step, the API `GET /repos/<user>/<repo>/pages` returns `404` an
 4. Push a commit to `develop` — workflow will create `gh-pages/beta/` and a pre-release. Merge `develop` → `main` to populate `gh-pages/stable/`.
 5. Enable Pages as in section 4.
 
-## 7. Current State (DNS Tester)
+## 7. Current State (DNS Tester) — verified 2026-08-31
 
-- Workflow: `.github/workflows/flatpak.yml` (2026-08-31) — signed repos with GPG `C54B2799388C8DC49EC61979...` (`flatpak@neikon.es`)
-- Latest successful runs:
-  - `26.08.31.1554` → `https://github.com/Neikon/dns_tester/releases/tag/26.08.31.1554` (pre-release, beta, signed)
-  - `gh-pages:beta` contains signed OSTree repo (`summary.sig`) + `dns_tester.flatpakrepo` with `GPGKey=mQENB…` and `dns_tester.flatpak`
-  - `gh-pages:stable` populated on next `main` push (signed)
+- Workflow: `.github/workflows/flatpak.yml` — signed repos with GPG `C54B2799388C8DC49EC61979` (`DNS Tester Flatpak <flatpak@neikon.es>`, RSA 2048)
+- Latest verified runs:
+  - `26.08.31.1602` → `https://github.com/Neikon/dns_tester/releases/tag/26.08.31.1602` (pre-release, beta, signed) + merge to `main` as `73acf22`
+  - `gh-pages:beta` → `93e0f09` (`26.08.31.1548`) and `05c1c17` (`26.08.31.1554`) — verified `GET /beta/dns_tester.flatpakrepo` `200` with `GPGKey=mQENB...`, `summary` + `summary.sig` present
+  - `gh-pages:stable` → `ca58bb3` (`26.08.31.1602` on `main`) — verified `GET /stable/dns_tester.flatpakrepo` `200` (was `404` before first `main` merge), `summary` + `summary.sig` present
+- Installation verified on Silverblue (`/var/home/neikon`):
+  ```bash
+  flatpak remote-add --if-not-exists dns_tester-beta https://neikon.github.io/dns_tester/beta/dns_tester.flatpakrepo
+  # → error: Flatpak system operation ConfigureRemote not allowed for user (expected without --user)
+  flatpak --user remote-add --if-not-exists dns_tester-beta https://neikon.github.io/dns_tester/beta/dns_tester.flatpakrepo
+  flatpak --user install dns_tester-beta es.neikon.dns_tester
+  # → 2.6 MB / 2.5 MB — Instalación completada.
+  ```
+  Beta and stable now both install with `flatpak --user` (signed, no `--no-gpg-verify` needed).
 - Versioning: `YY.MM.DD.hhmm` bumped on every commit, synchronized across `meson.build`, `src/main.py`, `data/*.metainfo.xml.in`
-- GPG secrets: `FLATPAK_GPG_PRIVATE_KEY`, `FLATPAK_GPG_KEY_ID`, `FLATPAK_GPG_PUBLIC_B64` in GitHub repo settings
+- GPG secrets: `FLATPAK_GPG_PRIVATE_KEY`, `FLATPAK_GPG_KEY_ID`, `FLATPAK_GPG_PUBLIC_B64` in GitHub repo settings (Actions secrets)
